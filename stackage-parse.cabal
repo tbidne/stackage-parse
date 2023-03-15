@@ -3,7 +3,7 @@ name:               stackage-parse
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.7 || ==9.4.4
+tested-with:        GHC ==9.2.7 || ==9.4.4
 copyright:          2023 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -69,8 +69,8 @@ library
     Stackage.Runner
 
   build-depends:
-    , aeson                 ^>=2.1
-    , base                  >=4.14.0.0  && <4.18
+    , aeson                 >=2.0       && <2.2
+    , base                  >=4.16.0.0  && <4.18
     , bytestring            ^>=0.11.1.0
     , http-client-tls       ^>=0.3
     , optparse-applicative  >=0.16.1.0  && <0.18
