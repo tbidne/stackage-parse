@@ -64,7 +64,7 @@ data SnapshotResp = MkSnapshotResp
       ToJSON
     )
 
--- | Packages in a stackage snapshot.
+-- | Package in a stackage snapshot.
 --
 -- @since 0.1
 data PackageResp = MkPackageResp

@@ -1,6 +1,11 @@
 -- | @since 0.1
 module Stackage
-  ( -- * Types
+  ( -- * REST queries
+    getLatestLts,
+    getLatestNightly,
+    getStackage,
+
+    -- * Types
 
     -- ** REST API
     StackageResp (..),
@@ -9,11 +14,6 @@ module Stackage
 
     -- ** Other
     Snapshot (..),
-
-    -- * REST queries
-    getLatestLts,
-    getLatestNightly,
-    getStackage,
 
     -- * Exceptions
     StackageException (..),
@@ -44,7 +44,7 @@ import Stackage.Data.Snapshot
 -- __Throws:__
 --
 --   * 'StackageException'
---   *'StackageException404'.
+--   * 'StackageException404'
 --
 -- @since 0.1
 getLatestNightly :: IO StackageResp
@@ -55,7 +55,7 @@ getLatestNightly = getStackage (SnapshotNightly Nothing)
 -- __Throws:__
 --
 --   * 'StackageException'
---   *'StackageException404'.
+--   * 'StackageException404'
 --
 -- @since 0.1
 getLatestLts :: IO StackageResp
@@ -66,7 +66,7 @@ getLatestLts = getStackage (SnapshotLts Nothing)
 -- __Throws:__
 --
 --   * 'StackageException'
---   *'StackageException404'.
+--   * 'StackageException404'
 --
 -- @since 0.1
 getStackage :: Snapshot -> IO StackageResp
