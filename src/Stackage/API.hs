@@ -38,7 +38,7 @@ getStackageResp = ServClient.client stackageAPI
 --
 -- @since 0.1
 getStackageClientEnv :: String -> IO ClientEnv
-getStackageClientEnv snapshot = do
+getStackageClientEnv snapshot =
   TLS.newTlsManager <&> \m -> ServClient.mkClientEnv m baseUrl
   where
     baseUrl =
