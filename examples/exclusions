@@ -1,0 +1,15 @@
+# excluding some libs
+pipes
+pipes-attoparsec
+pipes-bytestring
+pipes-concurrency
+pipes-csv
+pipes-extras
+pipes-fastx
+pipes-fluid
+pipes-group
+pipes-http
+pipes-mongodb
+pipes-parse
+pipes-random
+pipes-wai

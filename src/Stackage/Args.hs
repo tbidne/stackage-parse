@@ -62,6 +62,8 @@ data Args = MkArgs
     -- | @since 0.1
     nightlySnapshot :: !(Maybe SnapshotStr),
     -- | @since 0.1
+    excludeFile :: !(Maybe FilePath),
+    -- | @since 0.1
     command :: !Command
   }
   deriving stock
@@ -136,6 +138,7 @@ argsParser =
   MkArgs
     <$> ltsSnapshotParser
     <*> nightlySnapshotParser
+    <*> excludeFileParser
     <*> commandParser
     <**> OA.helper
     <**> version
@@ -168,6 +171,24 @@ nightlySnapshotParser = snapshotParser' options
       mconcat
         [ "Nightly snapshot e.g. 2023-03-14 or the string 'latest'. ",
           "Overrides --lts."
+        ]
+
+excludeFileParser :: Parser (Maybe FilePath)
+excludeFileParser =
+  A.optional $
+    OA.option OA.str $
+      mconcat
+        [ OA.long "exclude",
+          OA.short 'e',
+          OA.metavar "PATH",
+          OA.help helpTxt
+        ]
+  where
+    helpTxt =
+      mconcat
+        [ "Path to file with a list of packages to exclude from the package ",
+          "list. Each package should be listed on a separate line, without ",
+          "version numbers."
         ]
 
 snapshotParser' :: Mod OptionFields SnapshotStr -> Parser (Maybe SnapshotStr)

@@ -3,10 +3,12 @@ module Main (main) where
 import Control.Exception (Exception (..), try)
 import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Asn
-import Data.ByteString.Char8 qualified as Char8
 import Data.Foldable (traverse_)
-import Data.IORef (newIORef, readIORef, writeIORef)
+import Data.HashSet qualified as Set
+import Data.IORef (modifyIORef', newIORef, readIORef)
+import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TEnc
 import Data.Version.Package qualified as PV
 import Stackage (StackageException404 (..))
 import Stackage.Data.Response (SnapshotResp (..), StackageResp (..))
@@ -30,6 +32,7 @@ tests = do
     [ pkgsTests,
       fullTests,
       testSnapshot,
+      testExclude,
       test404
     ]
 
@@ -44,7 +47,7 @@ pkgsTests =
 
 testPkgsFormatCabal :: TestTree
 testPkgsFormatCabal = testCase "--format cabal" $ do
-  results <- T.lines . T.pack <$> run pkgsArgs
+  results <- run pkgsArgs
 
   case results of
     [] -> assertFailure "Received empty pkgs list"
@@ -77,7 +80,7 @@ testPkgsFormatNone = testCase "No format" (runsPkgsFormatShort [])
 
 runsPkgsFormatShort :: [String] -> IO ()
 runsPkgsFormatShort fmtArgs = do
-  results <- T.lines . T.pack <$> run pkgsArgs
+  results <- run pkgsArgs
 
   case results of
     [] -> assertFailure "Received empty pkgs list"
@@ -168,7 +171,7 @@ testFullNightlyOverridesLts = testCase "--nightly overrides lts" $ do
 
 runsFull :: [String] -> (StackageResp -> IO a) -> IO a
 runsFull args expect = do
-  result <- run snapshotArgs
+  result <- T.unlines <$> run snapshotArgs
 
   case decodeStr @StackageResp result of
     Left err -> assertFailure $ "Could not decode StackageResp: " <> err
@@ -178,12 +181,41 @@ runsFull args expect = do
 
 testSnapshot :: TestTree
 testSnapshot = testCase "Snapshot command" $ do
-  result <- run args
+  result <- T.unlines <$> run args
 
   whenLeft (decodeStr @SnapshotResp result) $ \err ->
     assertFailure $ "Could not decode StackageResp: " <> err
   where
     args = ["snapshot"]
+
+testExclude :: TestTree
+testExclude = testCase "Excludes packages" $ do
+  results <- run args
+  -- verify the below packages are excluded from the results
+  [] @=? filter (`Set.member` excluded) (fmap dropVersion results)
+  where
+    args = ["--lts", "20.14", "--exclude", "./examples/exclusions", "pkgs"]
+    excluded =
+      Set.fromList
+        [ "pipes",
+          "pipes-attoparsec",
+          "pipes-bytestring",
+          "pipes-concurrency",
+          "pipes-csv",
+          "pipes-extras",
+          "pipes-fastx",
+          "pipes-fluid",
+          "pipes-group",
+          "pipes-http",
+          "pipes-mongodb",
+          "pipes-parse",
+          "pipes-random",
+          "pipes-wai"
+        ]
+    dropVersion = T.intercalate "-" . dropLast . T.split (== '-')
+    dropLast [] = []
+    dropLast [_] = []
+    dropLast (x : xs) = x : dropLast xs
 
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do
@@ -194,14 +226,14 @@ test404 = testCase "Throws 404" $ do
     badRun = withArgs args $ withStackageParser (const (pure ()))
     args = ["--lts", "bad-snapshot", "pkgs"]
 
-run :: [String] -> IO String
+run :: [String] -> IO [Text]
 run args = do
-  ref <- newIORef ""
-  withArgs args $ withStackageParser (writeIORef ref)
-  readIORef ref
+  ref <- newIORef []
+  withArgs args $ withStackageParser (\s -> modifyIORef' ref (T.pack s :))
+  reverse <$> readIORef ref
 
-decodeStr :: (FromJSON a) => String -> Either String a
-decodeStr = Asn.eitherDecodeStrict' . Char8.pack
+decodeStr :: (FromJSON a) => Text -> Either String a
+decodeStr = Asn.eitherDecodeStrict' . TEnc.encodeUtf8
 
 whenLeft :: (Applicative f) => Either e a -> (e -> f ()) -> f ()
 whenLeft (Left e) f = f e

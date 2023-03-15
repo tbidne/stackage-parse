@@ -22,7 +22,7 @@
 stackage-parse: A tool for parsing stackage snapshot data.
 
 Usage: stackage-parse [--lts (latest|LTS_STR)] [--nightly (latest|DATE_STR)]
-                      COMMAND [-v|--version]
+                      [-e|--exclude PATH] COMMAND [-v|--version]
 
 Available options:
   --lts (latest|LTS_STR)   LTS snapshot e.g. 20.14 or the string 'latest'.
@@ -30,6 +30,9 @@ Available options:
   --nightly (latest|DATE_STR)
                            Nightly snapshot e.g. 2023-03-14 or the string
                            'latest'. Overrides --lts.
+  -e,--exclude PATH        Path to file with a list of packages to exclude from
+                           the package list. Each package should be listed on a
+                           separate line, without version numbers.
   -h,--help                Show this help text
 
 Available commands:
@@ -84,7 +87,6 @@ acc-0.2.0.2
 Alternatively, `--format cabal` and `--comma` will produce output suitable for use in a cabal file's `build-depends`.
 
 ```
-# retrieving stackage lts in cabal format
 $ stackage-parse --lts 20.14 pkgs -f cabal -c append
 abstract-deque ==0.3,
 abstract-deque-tests ==0.3,
@@ -92,6 +94,23 @@ abstract-par ==0.3.3,
 AC-Angle ==1.0,
 acc ==0.2.0.1,
 ...
+```
+
+We can also provide a list of packages to exclude:
+
+```
+$ cat exclusions
+abstract-deque
+abstract-deque-tests
+
+$ stackage-parse --lts 20.14 --exclude exclusions pkgs
+Up to date
+abstract-par-0.3.3
+AC-Angle-1.0
+acc-0.2.0.1
+ace-0.6
+acid-state-0.16.1.1
+---
 ```
 
 ## Snapshot
