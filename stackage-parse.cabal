@@ -22,6 +22,7 @@ source-repository head
 
 common common-lang
   default-extensions:
+    NoFieldSelectors
     BangPatterns
     ConstraintKinds
     DataKinds
@@ -31,6 +32,7 @@ common common-lang
     DeriveTraversable
     DerivingStrategies
     DerivingVia
+    DuplicateRecordFields
     FlexibleContexts
     FlexibleInstances
     FunctionalDependencies
@@ -43,6 +45,8 @@ common common-lang
     MultiWayIf
     NamedFieldPuns
     NumericUnderscores
+    OverloadedRecordDot
+    OverloadedRecordUpdate
     OverloadedStrings
     PatternSynonyms
     RankNTypes
@@ -56,8 +60,21 @@ common common-lang
 
 library
   import:           common-lang
-  exposed-modules:  Lib
-  build-depends:    base >=4.14.0.0 && <4.18
+  exposed-modules:
+    Stackage
+    Stackage.API
+    Stackage.Args
+    Stackage.Data.Response
+    Stackage.Data.Snapshot
+
+  build-depends:
+    , aeson                 ^>=2.1
+    , base                  >=4.14.0.0 && <4.18
+    , http-client-tls       ^>=0.3
+    , optparse-applicative  >=0.16.1.0 && <0.18
+    , servant               ^>=0.19
+    , servant-client        ^>=0.19
+
   hs-source-dirs:   src
   default-language: Haskell2010
 
@@ -65,7 +82,9 @@ executable stackage-parse
   import:           common-lang
   main-is:          Main.hs
   build-depends:
+    , aeson
     , base
+    , bytestring      ^>=0.11.1.0
     , stackage-parse
 
   hs-source-dirs:   app

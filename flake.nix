@@ -25,7 +25,7 @@
             (hlib.dontCheck c.haskell-language-server)
           ];
           hlib = pkgs.haskell.lib;
-          ghc-version = "ghc944";
+          ghc-version = "ghc927";
           compiler = pkgs.haskell.packages."${ghc-version}";
           mkPkg = returnShellEnv:
             compiler.developPackage {

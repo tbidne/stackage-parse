@@ -11,3 +11,9 @@
 [![style](http://img.shields.io/github/actions/workflow/status/tbidne/stackage-parse/style.yaml?branch=main&label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/stackage-parse/actions/workflows/style.yaml)
 
 </div>
+
+---
+
+# Introduction
+
+`stackage-parse` is a CLI utility for retrieving `stackage` snapshot data from [stackage.org](www.stackage.org).

@@ -61,9 +61,4 @@ haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.4/stackage-parse-0.1/opt/doc/html/stackage-parse/* docs/
-
-.PHONY: hackage
-hackage:
-	cabal sdist ;\
-	cabal haddock --haddock-for-hackage --enable-doc
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.7/stackage-parse-0.1/opt/doc/html/stackage-parse/* docs/

@@ -1,0 +1,16 @@
+{
+  "snapshot": {
+    "ghc": "9.4.4",
+    "created": "2023-03-13",
+    "name": "nightly-2023-03-13",
+    "compiler": "ghc-9.4.4"
+  },
+  "packages": [
+    {
+      "origin": "hackage",
+      "name": "abstract-deque",
+      "version": "0.3",
+      "synopsis": "Abstract, parameterized interface to mutable Deques."
+    }
+  ]
+}
