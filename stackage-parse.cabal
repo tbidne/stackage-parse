@@ -9,9 +9,12 @@ author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
 homepage:           https://github.com/tbidne/stackage-parse/
 bug-reports:        https://github.com/tbidne/stackage-parse/issues
-synopsis:           Template
-description:        Template
-category:           Template
+synopsis:           Stackage snapshot CLI tool
+description:
+  Stackage-parse is a CLI tool for retrieving stackage snapshot metadata e.g.
+  package list.
+
+category:           Stackage, CLI
 extra-source-files:
   CHANGELOG.md
   README.md
