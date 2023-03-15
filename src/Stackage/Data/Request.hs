@@ -3,11 +3,14 @@
 -- @since 0.1
 module Stackage.Data.Request
   ( SnapshotReq (..),
-    toSnapshotId,
+    SnapshotIdReq (MkSnapshotIdReq),
+    unSnapshotIdReq,
+    mkSnapshotIdReq,
   )
 where
 
 import Data.Text (Text)
+import Servant.API (ToHttpApiData)
 
 -- | Stackage snapshots.
 --
@@ -23,27 +26,56 @@ data SnapshotReq
     --
     -- @since 0.1
     SnapshotReqNightly (Maybe Text)
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
+
+-- | @since 0.1
+newtype SnapshotIdReq = UnsafeSnapshotIdReq Text
+  deriving stock
+    ( -- | @since 0.1
+      Eq
+    )
+  deriving
+    ( -- | @since 0.1
+      Show,
+      -- | @since 0.1
+      ToHttpApiData
+    )
+    via Text
+
+-- | @since 0.1
+pattern MkSnapshotIdReq :: Text -> SnapshotIdReq
+pattern MkSnapshotIdReq t <- UnsafeSnapshotIdReq t
+
+{-# COMPLETE MkSnapshotIdReq #-}
+
+-- | @since 0.1
+unSnapshotIdReq :: SnapshotIdReq -> Text
+unSnapshotIdReq (UnsafeSnapshotIdReq t) = t
 
 -- | Turns a snapshot into a string suitable for use with a stackage request
--- i.e @stackage.org\/<toSnapshotId snapshot>@.
+-- i.e @stackage.org\/<mkSnapshotIdReq snapshot>@.
 --
 -- ==== __Examples__
--- >>> toSnapshotId (SnapshotReqLts (Just "20.14"))
+-- >>> mkSnapshotIdReq (SnapshotReqLts (Just "20.14"))
 -- "lts-20.14"
 --
--- >>> toSnapshotId (SnapshotReqLts Nothing)
+-- >>> mkSnapshotIdReq (SnapshotReqLts Nothing)
 -- "lts"
 --
--- >>> toSnapshotId (SnapshotReqNightly (Just "2023-03-14"))
+-- >>> mkSnapshotIdReq (SnapshotReqNightly (Just "2023-03-14"))
 -- "nightly-2023-03-14"
 --
--- >>> toSnapshotId (SnapshotReqNightly Nothing)
+-- >>> mkSnapshotIdReq (SnapshotReqNightly Nothing)
 -- "nightly"
 --
 -- @since 0.1
-toSnapshotId :: SnapshotReq -> Text
-toSnapshotId (SnapshotReqLts (Just ltsStr)) = "lts-" <> ltsStr
-toSnapshotId (SnapshotReqLts Nothing) = "lts"
-toSnapshotId (SnapshotReqNightly (Just dateStr)) = "nightly-" <> dateStr
-toSnapshotId (SnapshotReqNightly Nothing) = "nightly"
+mkSnapshotIdReq :: SnapshotReq -> SnapshotIdReq
+mkSnapshotIdReq (SnapshotReqLts (Just ltsStr)) = UnsafeSnapshotIdReq $ "lts-" <> ltsStr
+mkSnapshotIdReq (SnapshotReqLts Nothing) = UnsafeSnapshotIdReq "lts"
+mkSnapshotIdReq (SnapshotReqNightly (Just dateStr)) = UnsafeSnapshotIdReq $ "nightly-" <> dateStr
+mkSnapshotIdReq (SnapshotReqNightly Nothing) = UnsafeSnapshotIdReq "nightly"

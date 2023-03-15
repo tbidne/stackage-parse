@@ -5,15 +5,13 @@ module Stackage
     getLatestNightly,
     getStackage,
 
-    -- * Types
+    -- * REST request
+    SnapshotReq (..),
 
-    -- ** REST API
+    -- * REST response
     StackageResp (..),
     SnapshotResp (..),
     PackageResp (..),
-
-    -- ** Other
-    SnapshotReq (..),
 
     -- * Exceptions
     StackageException (..),
@@ -31,8 +29,10 @@ import Stackage.API
     getStackageResp,
   )
 import Stackage.Data.Request
-  ( SnapshotReq (..),
-    toSnapshotId,
+  ( SnapshotIdReq,
+    SnapshotReq (..),
+    mkSnapshotIdReq,
+    unSnapshotIdReq,
   )
 import Stackage.Data.Response
   ( PackageResp (..),
@@ -76,11 +76,11 @@ getStackage snapshot = do
   ServClient.runClientM (getStackageResp snapshotId) cenv >>= \case
     Left err ->
       if is404 err
-        then throwIO $ MkStackageException404 snapshot err
-        else throwIO $ MkStackageException snapshot err
+        then throwIO $ MkStackageException404 snapshotId err
+        else throwIO $ MkStackageException snapshotId err
     Right str -> pure str
   where
-    snapshotId = toSnapshotId snapshot
+    snapshotId = mkSnapshotIdReq snapshot
 
     is404 (FailureResponse _ response) =
       response.responseStatusCode.statusCode == 404
@@ -89,7 +89,7 @@ getStackage snapshot = do
 -- | Exception for 404s, likely due to wrong snapshot.
 --
 -- @since 0.1
-data StackageException404 = MkStackageException404 SnapshotReq ClientError
+data StackageException404 = MkStackageException404 SnapshotIdReq ClientError
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -99,10 +99,10 @@ data StackageException404 = MkStackageException404 SnapshotReq ClientError
 
 -- | @since 0.1
 instance Exception StackageException404 where
-  displayException (MkStackageException404 snapshot err) =
+  displayException (MkStackageException404 snapshotId err) =
     mconcat
       [ "Received 404 for snapshot: ",
-        T.unpack (toSnapshotId snapshot),
+        T.unpack (unSnapshotIdReq snapshotId),
         ". Is that correct? Exception:\n\n",
         displayException err
       ]
@@ -110,7 +110,7 @@ instance Exception StackageException404 where
 -- | General network exception.
 --
 -- @since 0.1
-data StackageException = MkStackageException SnapshotReq ClientError
+data StackageException = MkStackageException SnapshotIdReq ClientError
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -123,7 +123,7 @@ instance Exception StackageException where
   displayException (MkStackageException snapshot err) =
     mconcat
       [ "Received exception for snapshot: ",
-        T.unpack (toSnapshotId snapshot),
+        T.unpack (unSnapshotIdReq snapshot),
         ". Exception:\n\n",
         displayException err
       ]

@@ -11,17 +11,17 @@ where
 
 import Data.Functor ((<&>))
 import Data.Proxy (Proxy (..))
-import Data.Text (Text)
 import Network.HTTP.Client.TLS qualified as TLS
 import Servant.API (Capture, Get, JSON, (:>))
 import Servant.Client (BaseUrl (..), ClientEnv, ClientM, Scheme (..))
 import Servant.Client qualified as ServClient
+import Stackage.Data.Request (SnapshotIdReq)
 import Stackage.Data.Response (StackageResp)
 
 -- | Stackage API
 --
 -- @since 0.1
-type StackageAPI = Capture "snapshot" Text :> Get '[JSON] StackageResp
+type StackageAPI = Capture "snapshot" SnapshotIdReq :> Get '[JSON] StackageResp
 
 -- | Stackage API
 --
@@ -32,7 +32,7 @@ stackageAPI = Proxy
 -- | GET 'StackageResp'.
 --
 -- @since 0.1
-getStackageResp :: Text -> ClientM StackageResp
+getStackageResp :: SnapshotIdReq -> ClientM StackageResp
 getStackageResp = ServClient.client stackageAPI
 
 -- | 'ClientEnv' for 'StackageAPI'.
