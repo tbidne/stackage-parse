@@ -7,6 +7,7 @@ module Stackage.Args
     SnapshotStr (..),
     Command (..),
     PkgListFormat (..),
+    Comma (..),
   )
 where
 
@@ -98,6 +99,21 @@ data PkgListFormat
       Show
     )
 
+-- | Appends/Prepends a comma to the package list.
+--
+-- @since 0.1
+data Comma
+  = -- | @since 0.1
+    CommaAppend
+  | -- | @since 0.1
+    CommaPrepend
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
+
 -- | Command.
 --
 -- @since 0.1
@@ -105,7 +121,7 @@ data Command
   = -- | @since 0.1
     Full
   | -- | @since 0.1
-    ListPackages !(Maybe PkgListFormat)
+    ListPackages !(Maybe PkgListFormat) !(Maybe Comma)
   | -- | @since 0.1
     GetSnapshot
   deriving stock
@@ -176,7 +192,7 @@ commandParser =
       OA.progDesc
         "Prints full package list and snapshot metadata formatted as json."
 
-    listPackagesParser = ListPackages <$> pkgListFormatParser
+    listPackagesParser = ListPackages <$> pkgListFormatParser <*> commaParser
     listPackagesHelp = OA.progDesc "Lists all packages in a given snapshot."
 
     getSnapshotParser = pure GetSnapshot
@@ -204,6 +220,24 @@ pkgListFormatParser =
           "Cabal corresponds to format suitable to be pasted into a cabal ",
           "file's 'build-depends' e.g. 'text ==2.0.1'. Defaults to short."
         ]
+
+commaParser :: Parser (Maybe Comma)
+commaParser =
+  A.optional $
+    OA.option readComma $
+      mconcat
+        [ OA.long "comma",
+          OA.short 'c',
+          OA.metavar "(append|prepend)",
+          OA.help helpTxt
+        ]
+  where
+    readComma =
+      OA.str @String >>= \case
+        "append" -> pure CommaAppend
+        "prepend" -> pure CommaPrepend
+        other -> fail $ "Unknown comma: " ++ other
+    helpTxt = "If given, prepends/appends a comma before/after each entry."
 
 mkCommand :: String -> Parser a -> InfoMod a -> Mod CommandFields a
 mkCommand cmdTxt parser helpTxt = OA.command cmdTxt (OA.info parser helpTxt)

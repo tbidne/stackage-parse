@@ -19,6 +19,7 @@ import Stackage
   )
 import Stackage.Args
   ( Args (..),
+    Comma (..),
     Command (..),
     PkgListFormat (..),
     SnapshotStr (..),
@@ -50,13 +51,17 @@ withStackageParser onStr = do
   case args.command of
     Full -> onStr $ toJson resp
     GetSnapshot -> onStr $ toJson resp.snapshot
-    ListPackages fmt -> do
+    ListPackages fmt comma -> do
       let fmtFn = case fmt of
             Just PkgListShort -> fmtShort
             Just PkgListCabal -> fmtCabal
             -- default to fmtShort
             Nothing -> fmtShort
-      for_ resp.packages $ onStr . fmtFn
+          commaFn = case comma of
+            Just CommaAppend -> commaAppend
+            Just CommaPrepend -> commaPrepend
+            Nothing -> id
+      for_ resp.packages $ onStr . commaFn . fmtFn
   where
     strToSnapshot cons SnapshotStrLatest = cons Nothing
     strToSnapshot cons (SnapshotStrLiteral l) = cons (Just l)
@@ -64,7 +69,8 @@ withStackageParser onStr = do
     fmtShort p = p.name ++ "-" ++ p.version
     fmtCabal p = p.name ++ " ==" ++ p.version
 
--- cabal run stackage-parse -- full | tail -n +2 | jq
+    commaAppend p = p ++ ","
+    commaPrepend p = ", " ++ p
 
 toJson :: (ToJSON a) => a -> String
 toJson = LChar8.unpack . Asn.encode

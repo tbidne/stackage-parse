@@ -51,6 +51,7 @@ Version: 0.1
 
 ```
 Usage: stackage-parse pkgs [-f|--format (short|cabal)]
+                           [-c|--comma (append|prepend)]
 
   Lists all packages in a given snapshot.
 
@@ -60,6 +61,9 @@ Available options:
                            'text-2.0.1'.Cabal corresponds to format suitable to
                            be pasted into a cabal file's 'build-depends' e.g.
                            'text ==2.0.1'. Defaults to short.
+  -c,--comma (append|prepend)
+                           If given, prepends/append a comma before/after each
+                           entry.
   -h,--help                Show this help text
 ```
 
@@ -77,16 +81,16 @@ acc-0.2.0.2
 ...
 ```
 
-Alternatively, `--format cabal` will produce output suitable for use in a cabal file's `build-depends`:
+Alternatively, `--format cabal` and `--comma` will produce output suitable for use in a cabal file's `build-depends`.
 
 ```
 # retrieving stackage lts in cabal format
-$ stackage-parse --lts 20.14 pkgs -f cabal
-abstract-deque ==0.3
-abstract-deque-tests ==0.3
-abstract-par ==0.3.3
-AC-Angle ==1.0
-acc ==0.2.0.1
+$ stackage-parse --lts 20.14 pkgs -f cabal -c append
+abstract-deque ==0.3,
+abstract-deque-tests ==0.3,
+abstract-par ==0.3.3,
+AC-Angle ==1.0,
+acc ==0.2.0.1,
 ...
 ```
 
