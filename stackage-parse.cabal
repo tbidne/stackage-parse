@@ -66,12 +66,14 @@ library
     Stackage.Args
     Stackage.Data.Response
     Stackage.Data.Snapshot
+    Stackage.Runner
 
   build-depends:
     , aeson                 ^>=2.1
-    , base                  >=4.14.0.0 && <4.18
+    , base                  >=4.14.0.0  && <4.18
+    , bytestring            ^>=0.11.1.0
     , http-client-tls       ^>=0.3
-    , optparse-applicative  >=0.16.1.0 && <0.18
+    , optparse-applicative  >=0.16.1.0  && <0.18
     , servant               ^>=0.19
     , servant-client        ^>=0.19
 
@@ -82,9 +84,7 @@ executable stackage-parse
   import:           common-lang
   main-is:          Main.hs
   build-depends:
-    , aeson
     , base
-    , bytestring      ^>=0.11.1.0
     , stackage-parse
 
   hs-source-dirs:   app
