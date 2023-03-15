@@ -13,7 +13,7 @@ module Stackage
     PackageResp (..),
 
     -- ** Other
-    Snapshot (..),
+    SnapshotReq (..),
 
     -- * Exceptions
     StackageException (..),
@@ -29,14 +29,14 @@ import Stackage.API
   ( getStackageClientEnv,
     getStackageResp,
   )
+import Stackage.Data.Request
+  ( SnapshotReq (..),
+    toSnapshotId,
+  )
 import Stackage.Data.Response
   ( PackageResp (..),
     SnapshotResp (..),
     StackageResp (..),
-  )
-import Stackage.Data.Snapshot
-  ( Snapshot (..),
-    toSnapshotId,
   )
 
 -- | Returns the 'StackageResp' for the latest nightly snapshot.
@@ -48,7 +48,7 @@ import Stackage.Data.Snapshot
 --
 -- @since 0.1
 getLatestNightly :: IO StackageResp
-getLatestNightly = getStackage (SnapshotNightly Nothing)
+getLatestNightly = getStackage (SnapshotReqNightly Nothing)
 
 -- | Returns the 'StackageResp' for the latest LTS snapshot.
 --
@@ -59,7 +59,7 @@ getLatestNightly = getStackage (SnapshotNightly Nothing)
 --
 -- @since 0.1
 getLatestLts :: IO StackageResp
-getLatestLts = getStackage (SnapshotLts Nothing)
+getLatestLts = getStackage (SnapshotReqLts Nothing)
 
 -- | Returns the 'StackageResp' corresponding to the given snapshot.
 --
@@ -69,7 +69,7 @@ getLatestLts = getStackage (SnapshotLts Nothing)
 --   * 'StackageException404'
 --
 -- @since 0.1
-getStackage :: Snapshot -> IO StackageResp
+getStackage :: SnapshotReq -> IO StackageResp
 getStackage snapshot = do
   cenv <- getStackageClientEnv (toSnapshotId snapshot)
   ServClient.runClientM getStackageResp cenv >>= \case
@@ -86,7 +86,7 @@ getStackage snapshot = do
 -- | Exception for 404s, likely due to wrong snapshot.
 --
 -- @since 0.1
-data StackageException404 = MkStackageException404 Snapshot ClientError
+data StackageException404 = MkStackageException404 SnapshotReq ClientError
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -107,7 +107,7 @@ instance Exception StackageException404 where
 -- | General network exception.
 --
 -- @since 0.1
-data StackageException = MkStackageException Snapshot ClientError
+data StackageException = MkStackageException SnapshotReq ClientError
   deriving stock
     ( -- | @since 0.1
       Eq,

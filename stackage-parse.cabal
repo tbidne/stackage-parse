@@ -66,8 +66,8 @@ library
     Stackage
     Stackage.API
     Stackage.Args
+    Stackage.Data.Request
     Stackage.Data.Response
-    Stackage.Data.Snapshot
     Stackage.Runner
 
   build-depends:

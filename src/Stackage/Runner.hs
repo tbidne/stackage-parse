@@ -19,7 +19,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Stackage
   ( PackageResp (..),
-    Snapshot (..),
+    SnapshotReq (..),
     StackageResp (..),
     getStackage,
   )
@@ -47,11 +47,11 @@ withStackageParser onStr = do
   args <- getArgs
 
   let snapshot = case args.nightlySnapshot of
-        Just x -> strToSnapshot SnapshotNightly x
+        Just x -> strToSnapshot SnapshotReqNightly x
         Nothing -> case args.ltsSnapshot of
-          Just x -> strToSnapshot SnapshotLts x
+          Just x -> strToSnapshot SnapshotReqLts x
           -- default to latest nightly
-          Nothing -> SnapshotNightly Nothing
+          Nothing -> SnapshotReqNightly Nothing
 
   excludeFn <- case args.excludeFile of
     Nothing -> pure (const False)
