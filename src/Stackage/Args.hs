@@ -136,7 +136,7 @@ ltsSnapshotParser = snapshotParser' options
     helpTxt =
       mconcat
         [ "LTS snapshot e.g. 20.14 or the string 'latest'. ",
-          "Overridden by --lts."
+          "Overridden by --nightly."
         ]
 
 nightlySnapshotParser :: Parser (Maybe SnapshotStr)
@@ -177,7 +177,7 @@ commandParser =
         "Prints full package list and snapshot metadata formatted as json."
 
     listPackagesParser = ListPackages <$> pkgListFormatParser
-    listPackagesHelp = OA.progDesc "Prints package list."
+    listPackagesHelp = OA.progDesc "Lists all packages in a given snapshot."
 
     getSnapshotParser = pure GetSnapshot
     getSnapshotHelp = OA.progDesc "Prints snapshot metadata formatted as json."
