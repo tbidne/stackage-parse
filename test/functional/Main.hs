@@ -229,7 +229,7 @@ test404 = testCase "Throws 404" $ do
 run :: [String] -> IO [Text]
 run args = do
   ref <- newIORef []
-  withArgs args $ withStackageParser (\s -> modifyIORef' ref (T.pack s :))
+  withArgs args $ withStackageParser (\s -> modifyIORef' ref (s :))
   reverse <$> readIORef ref
 
 decodeStr :: (FromJSON a) => Text -> Either String a

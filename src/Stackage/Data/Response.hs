@@ -9,6 +9,7 @@ module Stackage.Data.Response
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
 import GHC.Generics (Generic)
 
 -- | Response returned by primary stackage endpoint e.g.
@@ -41,13 +42,13 @@ data StackageResp = MkStackageResp
 -- @since 0.1
 data SnapshotResp = MkSnapshotResp
   { -- | @since 0.1
-    ghc :: String,
+    ghc :: Text,
     -- | @since 0.1
-    created :: String,
+    created :: Text,
     -- | @since 0.1
-    name :: String,
+    name :: Text,
     -- | @since 0.1
-    compiler :: String
+    compiler :: Text
   }
   deriving stock
     ( -- | @since 0.1
@@ -69,13 +70,13 @@ data SnapshotResp = MkSnapshotResp
 -- @since 0.1
 data PackageResp = MkPackageResp
   { -- | @since 0.1
-    origin :: String,
+    origin :: Text,
     -- | @since 0.1
-    name :: String,
+    name :: Text,
     -- | @since 0.1
-    version :: String,
+    version :: Text,
     -- | @since 0.1
-    synopsis :: String
+    synopsis :: Text
   }
   deriving stock
     ( -- | @since 0.1

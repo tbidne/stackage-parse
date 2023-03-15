@@ -15,6 +15,7 @@ import Control.Applicative qualified as A
 import Data.Functor ((<&>))
 import Data.List qualified as L
 import Data.String (IsString)
+import Data.Text (Text)
 import Options.Applicative
   ( CommandFields,
     InfoMod,
@@ -78,7 +79,7 @@ data SnapshotStr
   = -- | @since 0.1
     SnapshotStrLatest
   | -- | @since 0.1
-    SnapshotStrLiteral !String
+    SnapshotStrLiteral !Text
   deriving stock
     ( -- | @since 0.1
       Eq,

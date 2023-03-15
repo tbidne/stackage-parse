@@ -12,11 +12,13 @@ import Control.Monad (unless)
 import Data.Aeson (ToJSON)
 import Data.Aeson qualified as Asn
 import Data.ByteString qualified as BS
-import Data.ByteString.Lazy.Char8 qualified as LChar8
+import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (for_)
 import Data.HashSet qualified as Set
+import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
+import Data.Text.Encoding.Error qualified as TEncError
 import Stackage
   ( PackageResp (..),
     SnapshotReq (..),
@@ -36,13 +38,13 @@ import Stackage.Args
 --
 -- @since 0.1
 runStackageParser :: IO ()
-runStackageParser = withStackageParser putStrLn
+runStackageParser = withStackageParser (putStrLn . T.unpack)
 
 -- | Parses CLI 'Args' and queries stackage. Results are handled via the
 -- argument fn.
 --
 -- @since 0.1
-withStackageParser :: (String -> IO ()) -> IO ()
+withStackageParser :: (Text -> IO ()) -> IO ()
 withStackageParser onStr = do
   args <- getArgs
 
@@ -79,13 +81,13 @@ withStackageParser onStr = do
     strToSnapshot cons SnapshotStrLatest = cons Nothing
     strToSnapshot cons (SnapshotStrLiteral l) = cons (Just l)
 
-    fmtShort p = p.name ++ "-" ++ p.version
-    fmtCabal p = p.name ++ " ==" ++ p.version
+    fmtShort p = p.name <> "-" <> p.version
+    fmtCabal p = p.name <> " ==" <> p.version
 
-    commaAppend p = p ++ ","
-    commaPrepend p = ", " ++ p
+    commaAppend p = p <> ","
+    commaPrepend p = ", " <> p
 
-getPackageExclusions :: FilePath -> IO (String -> Bool)
+getPackageExclusions :: FilePath -> IO (Text -> Bool)
 getPackageExclusions path = do
   contents <-
     BS.readFile path
@@ -97,12 +99,15 @@ getPackageExclusions path = do
 
   let excludedSet = Set.fromList . skipComments $ T.lines contents
 
-  pure $ (`Set.member` excludedSet) . T.pack
+  pure (`Set.member` excludedSet)
   where
     -- Technically this is unnecessary as a "comment line" (e.g. # text ...)
     -- will never match a hackage package name. Still, seems better to
     -- strip them.
     skipComments = filter (not . T.isPrefixOf "#")
 
-toJson :: (ToJSON a) => a -> String
-toJson = LChar8.unpack . Asn.encode
+toJson :: (ToJSON a) => a -> Text
+toJson =
+  TEnc.decodeUtf8With TEncError.lenientDecode
+    . BSL.toStrict
+    . Asn.encode

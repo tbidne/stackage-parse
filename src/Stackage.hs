@@ -22,6 +22,7 @@ module Stackage
 where
 
 import Control.Exception (Exception (displayException), throwIO)
+import Data.Text qualified as T
 import Network.HTTP.Types.Status (Status (..))
 import Servant.Client (ClientError (..))
 import Servant.Client qualified as ServClient
@@ -71,14 +72,16 @@ getLatestLts = getStackage (SnapshotReqLts Nothing)
 -- @since 0.1
 getStackage :: SnapshotReq -> IO StackageResp
 getStackage snapshot = do
-  cenv <- getStackageClientEnv (toSnapshotId snapshot)
-  ServClient.runClientM getStackageResp cenv >>= \case
+  cenv <- getStackageClientEnv
+  ServClient.runClientM (getStackageResp snapshotId) cenv >>= \case
     Left err ->
       if is404 err
         then throwIO $ MkStackageException404 snapshot err
         else throwIO $ MkStackageException snapshot err
     Right str -> pure str
   where
+    snapshotId = toSnapshotId snapshot
+
     is404 (FailureResponse _ response) =
       response.responseStatusCode.statusCode == 404
     is404 _ = False
@@ -99,7 +102,7 @@ instance Exception StackageException404 where
   displayException (MkStackageException404 snapshot err) =
     mconcat
       [ "Received 404 for snapshot: ",
-        toSnapshotId snapshot,
+        T.unpack (toSnapshotId snapshot),
         ". Is that correct? Exception:\n\n",
         displayException err
       ]
@@ -120,7 +123,7 @@ instance Exception StackageException where
   displayException (MkStackageException snapshot err) =
     mconcat
       [ "Received exception for snapshot: ",
-        toSnapshotId snapshot,
+        T.unpack (toSnapshotId snapshot),
         ". Exception:\n\n",
         displayException err
       ]

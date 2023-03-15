@@ -7,6 +7,8 @@ module Stackage.Data.Request
   )
 where
 
+import Data.Text (Text)
+
 -- | Stackage snapshots.
 --
 -- @since 0.1
@@ -15,12 +17,12 @@ data SnapshotReq
     -- the latest LTS.
     --
     -- @since 0.1
-    SnapshotReqLts (Maybe String)
+    SnapshotReqLts (Maybe Text)
   | -- | Nightly snapshots e.g. @SnapshotReqNightly (Just "2023-03-14")@. 'Nothing'
     -- corresponds to the latest nightly.
     --
     -- @since 0.1
-    SnapshotReqNightly (Maybe String)
+    SnapshotReqNightly (Maybe Text)
   deriving stock (Eq, Ord, Show)
 
 -- | Turns a snapshot into a string suitable for use with a stackage request
@@ -40,8 +42,8 @@ data SnapshotReq
 -- "nightly"
 --
 -- @since 0.1
-toSnapshotId :: SnapshotReq -> String
-toSnapshotId (SnapshotReqLts (Just ltsStr)) = "lts-" ++ ltsStr
+toSnapshotId :: SnapshotReq -> Text
+toSnapshotId (SnapshotReqLts (Just ltsStr)) = "lts-" <> ltsStr
 toSnapshotId (SnapshotReqLts Nothing) = "lts"
-toSnapshotId (SnapshotReqNightly (Just dateStr)) = "nightly-" ++ dateStr
+toSnapshotId (SnapshotReqNightly (Just dateStr)) = "nightly-" <> dateStr
 toSnapshotId (SnapshotReqNightly Nothing) = "nightly"
