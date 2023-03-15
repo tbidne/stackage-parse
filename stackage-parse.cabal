@@ -25,39 +25,20 @@ source-repository head
 
 common common-lang
   default-extensions:
-    NoFieldSelectors
-    BangPatterns
-    ConstraintKinds
     DataKinds
     DeriveAnyClass
-    DeriveFunctor
     DeriveGeneric
-    DeriveTraversable
-    DerivingStrategies
     DerivingVia
     DuplicateRecordFields
     FlexibleContexts
-    FlexibleInstances
-    FunctionalDependencies
-    GADTs
-    GeneralizedNewtypeDeriving
     ImportQualifiedPost
-    InstanceSigs
     LambdaCase
-    MultiParamTypeClasses
-    MultiWayIf
     NamedFieldPuns
-    NumericUnderscores
     OverloadedRecordDot
     OverloadedStrings
     PatternSynonyms
-    RankNTypes
     ScopedTypeVariables
-    StandaloneDeriving
-    StandaloneKindSignatures
-    TupleSections
     TypeApplications
-    TypeFamilyDependencies
     TypeOperators
 
 library
