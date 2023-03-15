@@ -1,4 +1,4 @@
-.PHONY: build clean repl watch ;\
+.PHONY: build clean repl watch functional ;\
 	cic ci formatc format lint lintc ;\
 	haddock hackage
 
@@ -29,6 +29,9 @@ watch:
 	else \
 		ghcid --command "cabal repl $(T)"; \
 	fi
+
+functional:
+	RUN_FUNCTIONAL=1 cabal test functional
 
 # ci
 

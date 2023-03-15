@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Control.Exception (Exception (..))
+import Control.Exception (Exception (..), try)
 import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Asn
 import Data.ByteString.Char8 qualified as Char8
@@ -8,6 +8,7 @@ import Data.Foldable (traverse_)
 import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
+import Stackage (StackageException404 (..))
 import Stackage.Data.Response (SnapshotResp (..), StackageResp (..))
 import Stackage.Runner (withStackageParser)
 import System.Environment (withArgs)
@@ -28,7 +29,8 @@ tests = do
     "Functional Tests"
     [ pkgsTests,
       fullTests,
-      testSnapshot
+      testSnapshot,
+      test404
     ]
 
 pkgsTests :: TestTree
@@ -116,6 +118,13 @@ testFullNightly = testCase "--nightly 2023-03-14" $
     expectedNightly @=? resp.snapshot
   where
     args = ["--nightly", "2023-03-14"]
+    expectedNightly =
+      MkSnapshotResp
+        { ghc = "9.4.4",
+          created = "2023-03-14",
+          name = "nightly-2023-03-14",
+          compiler = "ghc-9.4.4"
+        }
 
 testFullLtsLatest :: TestTree
 testFullLtsLatest =
@@ -130,6 +139,13 @@ testFullLts = testCase "--lts 20.14" $
     expectedLts @=? resp.snapshot
   where
     args = ["--lts", "20.14"]
+    expectedLts =
+      MkSnapshotResp
+        { ghc = "9.2.7",
+          created = "2023-03-12",
+          name = "lts-20.14",
+          compiler = "ghc-9.2.7"
+        }
 
 testFull :: TestTree
 testFull =
@@ -142,6 +158,13 @@ testFullNightlyOverridesLts = testCase "--nightly overrides lts" $ do
     expectedNightly @=? resp.snapshot
   where
     args = ["--nightly", "2023-03-14", "--lts", "latest"]
+    expectedNightly =
+      MkSnapshotResp
+        { ghc = "9.4.4",
+          created = "2023-03-14",
+          name = "nightly-2023-03-14",
+          compiler = "ghc-9.4.4"
+        }
 
 runsFull :: [String] -> (StackageResp -> IO a) -> IO a
 runsFull args expect = do
@@ -162,29 +185,20 @@ testSnapshot = testCase "Snapshot command" $ do
   where
     args = ["snapshot"]
 
+test404 :: TestTree
+test404 = testCase "Throws 404" $ do
+  try @StackageException404 badRun >>= \case
+    Left (MkStackageException404 _ _) -> pure ()
+    Right _ -> assertFailure "Expected 404 exception, received none."
+  where
+    badRun = withArgs args $ withStackageParser (const (pure ()))
+    args = ["--lts", "bad-snapshot", "pkgs"]
+
 run :: [String] -> IO String
 run args = do
   ref <- newIORef ""
   withArgs args $ withStackageParser (writeIORef ref)
   readIORef ref
-
-expectedNightly :: SnapshotResp
-expectedNightly =
-  MkSnapshotResp
-    { ghc = "9.4.4",
-      created = "2023-03-14",
-      name = "nightly-2023-03-14",
-      compiler = "ghc-9.4.4"
-    }
-
-expectedLts :: SnapshotResp
-expectedLts =
-  MkSnapshotResp
-    { ghc = "9.2.7",
-      created = "2023-03-12",
-      name = "lts-20.14",
-      compiler = "ghc-9.2.7"
-    }
 
 decodeStr :: (FromJSON a) => String -> Either String a
 decodeStr = Asn.eitherDecodeStrict' . Char8.pack
