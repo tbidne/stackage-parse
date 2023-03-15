@@ -23,8 +23,6 @@ data Snapshot
     SnapshotNightly (Maybe String)
   deriving stock (Eq, Ord, Show)
 
-{-# COMPLETE SnapshotLts, SnapshotNightly #-}
-
 -- | Turns a snapshot into a string suitable for use with a stackage request
 -- i.e @stackage.org\/<toSnapshotId snapshot>@.
 --
