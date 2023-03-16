@@ -89,13 +89,7 @@ withStackageParser onStr = do
 
 getPackageExclusions :: FilePath -> IO (Text -> Bool)
 getPackageExclusions path = do
-  contents <-
-    BS.readFile path
-      >>= ( \case
-              Left err -> throwIO err
-              Right c -> pure c
-          )
-        . TEnc.decodeUtf8'
+  contents <- either throwIO pure . TEnc.decodeUtf8' =<< BS.readFile path
 
   let excludedSet = Set.fromList . skipComments $ T.lines contents
 
