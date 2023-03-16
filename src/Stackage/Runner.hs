@@ -91,14 +91,26 @@ getPackageExclusions :: FilePath -> IO (Text -> Bool)
 getPackageExclusions path = do
   contents <- either throwIO pure . TEnc.decodeUtf8' =<< BS.readFile path
 
-  let excludedSet = Set.fromList . skipComments $ T.lines contents
+  let excludedSet =
+        Set.fromList
+          . fmap parsePkg
+          . skipLines
+          $ T.lines contents
 
   pure (`Set.member` excludedSet)
   where
+    skipLines = filter (\l -> isComment l || isEmpty l)
+
+    parsePkg line = case T.split (== '#') line of
+      -- remove everything after the first #
+      (p : _) -> T.strip p
+      [] -> T.strip line
+
     -- Technically this is unnecessary as a "comment line" (e.g. # text ...)
     -- will never match a hackage package name. Still, seems better to
     -- strip them.
-    skipComments = filter (not . T.isPrefixOf "#")
+    isComment = not . T.isPrefixOf "#" . T.strip
+    isEmpty = T.null . T.strip
 
 toJson :: (ToJSON a) => a -> Text
 toJson =
