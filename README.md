@@ -16,7 +16,9 @@
 
 # Introduction
 
-`stackage-parse` is a CLI utility for retrieving `stackage` snapshot data from [stackage.org](www.stackage.org).
+`stackage-parse` is a CLI utility for retrieving `stackage` snapshot data from [stackage.org](www.stackage.org). The primary motivation is testing with [clc-stackage](https://github.com/Bodigrim/clc-stackage); that is, easily updating a cabal file with every package from the latest stackage snapshot. See the [Pkgs](#pkgs) command for this specific workflow.
+
+**Usage:**
 
 ```
 stackage-parse: A tool for parsing stackage snapshot data.
@@ -72,22 +74,10 @@ Available options:
 
 **Examples:**
 
-Omitting the `--format` option is equivalent to `--format short`.
+As producing cabal-compatible stackage output is the main motivation, let us cut to the chase:
 
 ```
-$ stackage-parse pkgs
-abstract-deque-0.3
-abstract-deque-tests-0.3
-abstract-par-0.3.3
-AC-Angle-1.0
-acc-0.2.0.2
-...
-```
-
-Alternatively, `--format cabal` and `--comma` will produce output suitable for use in a cabal file's `build-depends`.
-
-```
-$ stackage-parse --lts 20.14 pkgs -f cabal -c append
+$ stackage-parse -e examples/exclusions pkgs -f cabal -c append
 abstract-deque ==0.3,
 abstract-deque-tests ==0.3,
 abstract-par ==0.3.3,
@@ -96,22 +86,10 @@ acc ==0.2.0.1,
 ...
 ```
 
-We can also provide a list of packages to exclude:
-
-```
-$ cat exclusions
-abstract-deque
-abstract-deque-tests
-
-$ stackage-parse --lts 20.14 --exclude exclusions pkgs
-Up to date
-abstract-par-0.3.3
-AC-Angle-1.0
-acc-0.2.0.1
-ace-0.6
-acid-state-0.16.1.1
----
-```
+* `pkgs` is the command.
+* `-f cabal` outputs in `cabal` format i.e. `abstract-par ==0.3.3` instead of `abstract-par-0.3.3`.
+* `-c append` appends a comma to each line.
+* `-e exclusions` is a list of package names to be excluded from the package set. For example, if `exclusions` contains the line `text`, then `text` will not appear in the `pkgs` output. This can be useful for excluding packages we know will not build with a library e.g. executables or those requiring C libs. See [the example](examples/exclusions) for more detail.
 
 ## Snapshot
 
