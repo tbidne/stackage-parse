@@ -2,7 +2,11 @@
 --
 -- @since 0.1
 module Stackage.Data.Request
-  ( SnapshotReq (..),
+  ( SnapshotReq,
+    mkSnapshotReqLatestLts,
+    mkSnapshotReqLts,
+    mkSnapshotReqLatestNightly,
+    mkSnapshotReqNightly,
     SnapshotIdReq (MkSnapshotIdReq),
     unSnapshotIdReq,
     mkSnapshotIdReq,
@@ -32,6 +36,22 @@ data SnapshotReq
       -- | @since 0.1
       Show
     )
+
+-- | @since 0.1
+mkSnapshotReqLatestLts :: SnapshotReq
+mkSnapshotReqLatestLts = SnapshotReqLts Nothing
+
+-- | @since 0.1
+mkSnapshotReqLts :: Text -> Maybe SnapshotReq
+mkSnapshotReqLts = Just . SnapshotReqLts . Just
+
+-- | @since 0.1
+mkSnapshotReqLatestNightly :: SnapshotReq
+mkSnapshotReqLatestNightly = SnapshotReqLts Nothing
+
+-- | @since 0.1
+mkSnapshotReqNightly :: Text -> Maybe SnapshotReq
+mkSnapshotReqNightly = Just . SnapshotReqNightly . Just
 
 -- | @since 0.1
 newtype SnapshotIdReq = UnsafeSnapshotIdReq Text

@@ -4,7 +4,6 @@
 module Stackage.Args
   ( getArgs,
     Args (..),
-    SnapshotStr (..),
     Command (..),
     PkgListFormat (..),
     Comma (..),
@@ -12,7 +11,6 @@ module Stackage.Args
 where
 
 import Control.Applicative qualified as A
-import Data.Functor ((<&>))
 import Data.List qualified as L
 import Data.String (IsString)
 import Data.Text (Text)
@@ -28,6 +26,13 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import Stackage.Data.Request
+  ( SnapshotReq,
+    mkSnapshotReqLatestLts,
+    mkSnapshotReqLatestNightly,
+    mkSnapshotReqLts,
+    mkSnapshotReqNightly,
+  )
 
 -- | Retrieves CLI 'Args'.
 --
@@ -59,27 +64,14 @@ parserInfoArgs =
 -- @since 0.1
 data Args = MkArgs
   { -- | @since 0.1
-    ltsSnapshot :: !(Maybe SnapshotStr),
+    ltsSnapshot :: !(Maybe SnapshotReq),
     -- | @since 0.1
-    nightlySnapshot :: !(Maybe SnapshotStr),
+    nightlySnapshot :: !(Maybe SnapshotReq),
     -- | @since 0.1
     excludeFile :: !(Maybe FilePath),
     -- | @since 0.1
     command :: !Command
   }
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
-
--- | @since 0.1
-data SnapshotStr
-  = -- | @since 0.1
-    SnapshotStrLatest
-  | -- | @since 0.1
-    SnapshotStrLiteral !Text
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -144,8 +136,9 @@ argsParser =
     <**> OA.helper
     <**> version
 
-ltsSnapshotParser :: Parser (Maybe SnapshotStr)
-ltsSnapshotParser = snapshotParser' options
+ltsSnapshotParser :: Parser (Maybe SnapshotReq)
+ltsSnapshotParser =
+  snapshotParser' mkSnapshotReqLatestLts mkSnapshotReqLts options
   where
     options =
       mconcat
@@ -159,8 +152,9 @@ ltsSnapshotParser = snapshotParser' options
           "Overridden by --nightly."
         ]
 
-nightlySnapshotParser :: Parser (Maybe SnapshotStr)
-nightlySnapshotParser = snapshotParser' options
+nightlySnapshotParser :: Parser (Maybe SnapshotReq)
+nightlySnapshotParser =
+  snapshotParser' mkSnapshotReqLatestNightly mkSnapshotReqNightly options
   where
     options =
       mconcat
@@ -192,13 +186,27 @@ excludeFileParser =
           "version numbers."
         ]
 
-snapshotParser' :: Mod OptionFields SnapshotStr -> Parser (Maybe SnapshotStr)
-snapshotParser' = A.optional . OA.option readSnapshot
+snapshotParser' ::
+  -- | Constructor for latest snapshot.
+  SnapshotReq ->
+  -- | Constructor for specific snapshot. Can fail.
+  (Text -> Maybe SnapshotReq) ->
+  -- | Options.
+  Mod OptionFields SnapshotReq ->
+  Parser (Maybe SnapshotReq)
+snapshotParser' mkLatest mk = A.optional . OA.option readSnapshot
   where
     readSnapshot =
-      OA.str <&> \case
-        "latest" -> SnapshotStrLatest
-        other -> SnapshotStrLiteral other
+      OA.str >>= \case
+        "latest" -> pure mkLatest
+        other -> case mk other of
+          Just s -> pure s
+          Nothing ->
+            fail $
+              mconcat
+                [ "Bad snapshot format. LTS snapshots should have the form ",
+                  "XX.YY, while nightly snapshots are YYYY-MM-DD."
+                ]
 
 commandParser :: Parser Command
 commandParser =

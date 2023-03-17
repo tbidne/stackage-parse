@@ -6,7 +6,11 @@ module Stackage
     getStackage,
 
     -- * REST request
-    SnapshotReq (..),
+    SnapshotReq,
+    mkSnapshotReqLatestLts,
+    mkSnapshotReqLts,
+    mkSnapshotReqLatestNightly,
+    mkSnapshotReqNightly,
 
     -- * REST response
     StackageResp (..),
@@ -30,8 +34,12 @@ import Stackage.API
   )
 import Stackage.Data.Request
   ( SnapshotIdReq,
-    SnapshotReq (..),
+    SnapshotReq,
     mkSnapshotIdReq,
+    mkSnapshotReqLatestLts,
+    mkSnapshotReqLatestNightly,
+    mkSnapshotReqLts,
+    mkSnapshotReqNightly,
     unSnapshotIdReq,
   )
 import Stackage.Data.Response
@@ -49,7 +57,7 @@ import Stackage.Data.Response
 --
 -- @since 0.1
 getLatestNightly :: IO StackageResp
-getLatestNightly = getStackage (SnapshotReqNightly Nothing)
+getLatestNightly = getStackage mkSnapshotReqLatestNightly
 
 -- | Returns the 'StackageResp' for the latest LTS snapshot.
 --
@@ -60,7 +68,7 @@ getLatestNightly = getStackage (SnapshotReqNightly Nothing)
 --
 -- @since 0.1
 getLatestLts :: IO StackageResp
-getLatestLts = getStackage (SnapshotReqLts Nothing)
+getLatestLts = getStackage mkSnapshotReqLatestLts
 
 -- | Returns the 'StackageResp' corresponding to the given snapshot.
 --

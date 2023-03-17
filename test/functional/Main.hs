@@ -110,8 +110,7 @@ fullTests =
 
 testFullNightlyLatest :: TestTree
 testFullNightlyLatest =
-  testCase "--nightly latest" $
-    runsFull args (const $ pure ())
+  testCase "--nightly latest" $ runsFull args (const $ pure ())
   where
     args = ["--nightly", "latest"]
 
@@ -130,9 +129,7 @@ testFullNightly = testCase "--nightly 2023-03-14" $
         }
 
 testFullLtsLatest :: TestTree
-testFullLtsLatest =
-  testCase "--lts latest" $
-    runsFull args (const $ pure ())
+testFullLtsLatest = testCase "--lts latest" $ runsFull args (const $ pure ())
   where
     args = ["--lts", "latest"]
 
@@ -152,13 +149,12 @@ testFullLts = testCase "--lts 20.14" $
 
 testFull :: TestTree
 testFull =
-  testCase "No arg uses implicit nightly" $
-    runsFull [] (const $ pure ())
+  testCase "No arg uses implicit nightly" $ runsFull [] (const $ pure ())
 
 testFullNightlyOverridesLts :: TestTree
-testFullNightlyOverridesLts = testCase "--nightly overrides lts" $ do
-  runsFull args $ \resp -> do
-    expectedNightly @=? resp.snapshot
+testFullNightlyOverridesLts = testCase "--nightly overrides lts" $
+  runsFull args $
+    \resp -> expectedNightly @=? resp.snapshot
   where
     args = ["--nightly", "2023-03-14", "--lts", "latest"]
     expectedNightly =

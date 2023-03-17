@@ -7,6 +7,7 @@ module Stackage.Runner
   )
 where
 
+import Control.Applicative ((<|>))
 import Control.Exception (throwIO)
 import Control.Monad (unless)
 import Data.Aeson (ToJSON)
@@ -15,22 +16,22 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (for_)
 import Data.HashSet qualified as Set
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncError
 import Stackage
   ( PackageResp (..),
-    SnapshotReq (..),
     StackageResp (..),
     getStackage,
+    mkSnapshotReqLatestNightly,
   )
 import Stackage.Args
   ( Args (..),
     Comma (..),
     Command (..),
     PkgListFormat (..),
-    SnapshotStr (..),
     getArgs,
   )
 
@@ -48,12 +49,11 @@ withStackageParser :: (Text -> IO ()) -> IO ()
 withStackageParser onStr = do
   args <- getArgs
 
-  let snapshot = case args.nightlySnapshot of
-        Just x -> strToSnapshot SnapshotReqNightly x
-        Nothing -> case args.ltsSnapshot of
-          Just x -> strToSnapshot SnapshotReqLts x
-          -- default to latest nightly
-          Nothing -> SnapshotReqNightly Nothing
+  -- default to latest nightly
+  let snapshot =
+        fromMaybe
+          mkSnapshotReqLatestNightly
+          (args.nightlySnapshot <|> args.ltsSnapshot)
 
   excludeFn <- case args.excludeFile of
     Nothing -> pure (const False)
@@ -78,9 +78,6 @@ withStackageParser onStr = do
       for_ resp.packages $ \pkg ->
         unless (excludeFn pkg.name) (onStr . commaFn . fmtFn $ pkg)
   where
-    strToSnapshot cons SnapshotStrLatest = cons Nothing
-    strToSnapshot cons (SnapshotStrLiteral l) = cons (Just l)
-
     fmtShort p = p.name <> "-" <> p.version
     fmtCabal p = p.name <> " ==" <> p.version
 
