@@ -220,7 +220,7 @@ test404 = testCase "Throws 404" $ do
     Right _ -> assertFailure "Expected 404 exception, received none."
   where
     badRun = withArgs args $ withStackageParser (const (pure ()))
-    args = ["--lts", "bad-snapshot", "pkgs"]
+    args = ["--lts", "00.99", "pkgs"]
 
 run :: [String] -> IO [Text]
 run args = do

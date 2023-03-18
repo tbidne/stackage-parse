@@ -14,6 +14,7 @@ import Control.Applicative qualified as A
 import Data.List qualified as L
 import Data.String (IsString)
 import Data.Text (Text)
+import Data.Text qualified as T
 import Options.Applicative
   ( CommandFields,
     InfoMod,
@@ -190,7 +191,7 @@ snapshotParser' ::
   -- | Constructor for latest snapshot.
   SnapshotReq ->
   -- | Constructor for specific snapshot. Can fail.
-  (Text -> Maybe SnapshotReq) ->
+  (Text -> Either Text SnapshotReq) ->
   -- | Options.
   Mod OptionFields SnapshotReq ->
   Parser (Maybe SnapshotReq)
@@ -200,13 +201,8 @@ snapshotParser' mkLatest mk = A.optional . OA.option readSnapshot
       OA.str >>= \case
         "latest" -> pure mkLatest
         other -> case mk other of
-          Just s -> pure s
-          Nothing ->
-            fail $
-              mconcat
-                [ "Bad snapshot format. LTS snapshots should have the form ",
-                  "XX.YY, while nightly snapshots are YYYY-MM-DD."
-                ]
+          Right s -> pure s
+          Left err -> fail $ T.unpack err
 
 commandParser :: Parser Command
 commandParser =

@@ -13,65 +13,62 @@ module Stackage.Data.Request
   )
 where
 
+import Control.Monad ((>=>))
 import Data.Text (Text)
-import Servant.API (ToHttpApiData)
-
--- | Stackage snapshots.
---
--- @since 0.1
-data SnapshotReq
-  = -- | LTS snapshots e.g. @SnapshotReqLts (Just "20.14")@. 'Nothing' corresponds to
-    -- the latest LTS.
-    --
-    -- @since 0.1
-    SnapshotReqLts (Maybe Text)
-  | -- | Nightly snapshots e.g. @SnapshotReqNightly (Just "2023-03-14")@. 'Nothing'
-    -- corresponds to the latest nightly.
-    --
-    -- @since 0.1
-    SnapshotReqNightly (Maybe Text)
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
+import Data.Text qualified as T
+import Data.Word (Word16, Word8)
+import Stackage.Data.Request.Internal (SnapshotIdReq (..), SnapshotReq (..))
+import Text.Read qualified as TR
 
 -- | @since 0.1
 mkSnapshotReqLatestLts :: SnapshotReq
-mkSnapshotReqLatestLts = SnapshotReqLts Nothing
+mkSnapshotReqLatestLts = UnsafeSnapshotReqLts Nothing
 
 -- | @since 0.1
-mkSnapshotReqLts :: Text -> Maybe SnapshotReq
-mkSnapshotReqLts = Just . SnapshotReqLts . Just
+mkSnapshotReqLts :: Text -> Either Text SnapshotReq
+mkSnapshotReqLts txt =
+  -- Verify text has form XX.YY
+  case T.split (== '.') txt of
+    [x, y] | nonEmpty x && nonEmpty y ->
+      case (readInt x, readInt y) of
+        (Just _, Just _) -> Right (UnsafeSnapshotReqLts (Just txt))
+        (Nothing, _) -> Left $ "LTS version should be an integer, received " <> x
+        (_, Nothing) -> Left $ "LTS version should be an integer, received " <> y
+    _ -> Left $ "LTS snapshots have the form XX.YY, received " <> txt
+  where
+    readInt :: Text -> Maybe Word16
+    readInt = TR.readMaybe . T.unpack
 
 -- | @since 0.1
 mkSnapshotReqLatestNightly :: SnapshotReq
-mkSnapshotReqLatestNightly = SnapshotReqLts Nothing
+mkSnapshotReqLatestNightly = UnsafeSnapshotReqNightly Nothing
 
 -- | @since 0.1
-mkSnapshotReqNightly :: Text -> Maybe SnapshotReq
-mkSnapshotReqNightly = Just . SnapshotReqNightly . Just
+mkSnapshotReqNightly :: Text -> Either Text SnapshotReq
+mkSnapshotReqNightly txt = case T.split (== '-') txt of
+  [y, m, d] | nonEmpty y && nonEmpty m && nonEmpty d ->
+    case (readYear y, readMonth m, readDay d) of
+      (Just _, Just _, Just _) -> Right (UnsafeSnapshotReqNightly (Just txt))
+      (Nothing, _, _) -> Left $ "Year should be an integer between 2000 and 2100, received " <> y
+      (_, Nothing, _) -> Left $ "Month should be an integer between 1 and 12, received " <> m
+      (_, _, Nothing) -> Left $ "Day should be an integer between 1 and 31, received " <> d
+  _ -> Left $ "Nightly snapshots have the form YYYY-MM-DD, received " <> txt
+  where
+    readYear = readDecimal @Word16 4 2000 2100
+    readMonth = readDecimal @Word8 2 1 12
+    readDay = readDecimal @Word8 2 1 31
 
--- | @since 0.1
-newtype SnapshotIdReq = UnsafeSnapshotIdReq Text
-  deriving stock
-    ( -- | @since 0.1
-      Eq
-    )
-  deriving
-    ( -- | @since 0.1
-      Show,
-      -- | @since 0.1
-      ToHttpApiData
-    )
-    via Text
+    readDecimal :: (Ord a, Read a) => Int -> a -> a -> Text -> Maybe a
+    readDecimal len l u =
+      (\t -> if T.length t == len then Just t else Nothing)
+        >=> TR.readMaybe . T.unpack
+        >=> \n ->
+          if n >= l && n <= u
+            then Just n
+            else Nothing
 
--- | @since 0.1
-pattern MkSnapshotIdReq :: Text -> SnapshotIdReq
-pattern MkSnapshotIdReq t <- UnsafeSnapshotIdReq t
-
-{-# COMPLETE MkSnapshotIdReq #-}
+nonEmpty :: Text -> Bool
+nonEmpty = not . T.null
 
 -- | @since 0.1
 unSnapshotIdReq :: SnapshotIdReq -> Text
@@ -95,7 +92,7 @@ unSnapshotIdReq (UnsafeSnapshotIdReq t) = t
 --
 -- @since 0.1
 mkSnapshotIdReq :: SnapshotReq -> SnapshotIdReq
-mkSnapshotIdReq (SnapshotReqLts (Just ltsStr)) = UnsafeSnapshotIdReq $ "lts-" <> ltsStr
-mkSnapshotIdReq (SnapshotReqLts Nothing) = UnsafeSnapshotIdReq "lts"
-mkSnapshotIdReq (SnapshotReqNightly (Just dateStr)) = UnsafeSnapshotIdReq $ "nightly-" <> dateStr
-mkSnapshotIdReq (SnapshotReqNightly Nothing) = UnsafeSnapshotIdReq "nightly"
+mkSnapshotIdReq (UnsafeSnapshotReqLts (Just ltsStr)) = UnsafeSnapshotIdReq $ "lts-" <> ltsStr
+mkSnapshotIdReq (UnsafeSnapshotReqLts Nothing) = UnsafeSnapshotIdReq "lts"
+mkSnapshotIdReq (UnsafeSnapshotReqNightly (Just dateStr)) = UnsafeSnapshotIdReq $ "nightly-" <> dateStr
+mkSnapshotIdReq (UnsafeSnapshotReqNightly Nothing) = UnsafeSnapshotIdReq "nightly"

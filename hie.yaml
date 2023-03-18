@@ -6,5 +6,8 @@ cradle:
     - path: "./app/Main.hs"
       component: "stackage-parse:exe:stackage-parse"
 
+    - path: "./test/unit"
+      component: "stackage-parse:test:unit"
+
     - path: "./test/functional"
       component: "stackage-parse:test:functional"
