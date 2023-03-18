@@ -96,7 +96,7 @@ getPackageExclusions path = do
 
   pure (`Set.member` excludedSet)
   where
-    skipLines = filter (\l -> isComment l || isEmpty l)
+    skipLines = filter (\l -> nonComment l && nonEmpty l)
 
     parsePkg line = case T.split (== '#') line of
       -- remove everything after the first #
@@ -106,8 +106,8 @@ getPackageExclusions path = do
     -- Technically this is unnecessary as a "comment line" (e.g. # text ...)
     -- will never match a hackage package name. Still, seems better to
     -- strip them.
-    isComment = not . T.isPrefixOf "#" . T.strip
-    isEmpty = T.null . T.strip
+    nonComment = not . T.isPrefixOf "#" . T.strip
+    nonEmpty = not . T.null . T.strip
 
 toJson :: (ToJSON a) => a -> Text
 toJson =
