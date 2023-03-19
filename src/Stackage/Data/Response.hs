@@ -18,9 +18,9 @@ import GHC.Generics (Generic)
 -- @since 0.1
 data StackageResp = MkStackageResp
   { -- | @since 0.1
-    snapshot :: SnapshotResp,
+    snapshot :: !SnapshotResp,
     -- | @since 0.1
-    packages :: [PackageResp]
+    packages :: ![PackageResp]
   }
   deriving stock
     ( -- | @since 0.1
@@ -42,13 +42,13 @@ data StackageResp = MkStackageResp
 -- @since 0.1
 data SnapshotResp = MkSnapshotResp
   { -- | @since 0.1
-    ghc :: Text,
+    ghc :: !Text,
     -- | @since 0.1
-    created :: Text,
+    created :: !Text,
     -- | @since 0.1
-    name :: Text,
+    name :: !Text,
     -- | @since 0.1
-    compiler :: Text
+    compiler :: !Text
   }
   deriving stock
     ( -- | @since 0.1
@@ -70,13 +70,13 @@ data SnapshotResp = MkSnapshotResp
 -- @since 0.1
 data PackageResp = MkPackageResp
   { -- | @since 0.1
-    origin :: Text,
+    origin :: !Text,
     -- | @since 0.1
-    name :: Text,
+    name :: !Text,
     -- | @since 0.1
-    version :: Text,
+    version :: !Text,
     -- | @since 0.1
-    synopsis :: Text
+    synopsis :: !Text
   }
   deriving stock
     ( -- | @since 0.1
