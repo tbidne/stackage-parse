@@ -16,7 +16,7 @@
 
 # Introduction
 
-`stackage-parse` is a CLI utility for retrieving `stackage` snapshot data from [stackage.org](www.stackage.org). The primary motivation is testing with [clc-stackage](https://github.com/Bodigrim/clc-stackage); that is, easily updating a cabal file with every package from the latest stackage snapshot. See the [Pkgs](#pkgs) command for this specific workflow.
+`stackage-parse` is a CLI utility for retrieving `stackage` snapshot data from [stackage.org](www.stackage.org). The primary motivation is testing with [clc-stackage](https://github.com/Bodigrim/clc-stackage): that is, easily updating a cabal file with every package from the latest stackage snapshot. See the [Pkgs](#pkgs) command for this specific workflow.
 
 **Usage:**
 
@@ -24,7 +24,8 @@
 stackage-parse: A tool for parsing stackage snapshot data.
 
 Usage: stackage-parse [--lts (latest|LTS_STR)] [--nightly (latest|DATE_STR)]
-                      [-e|--exclude PATH] COMMAND [-v|--version]
+                      [-e|--exclusions PATH] [-i|--inclusions PATH] COMMAND
+                      [-v|--version]
 
 Available options:
   --lts (latest|LTS_STR)   LTS snapshot e.g. 20.14 or the string 'latest'.
@@ -32,7 +33,10 @@ Available options:
   --nightly (latest|DATE_STR)
                            Nightly snapshot e.g. 2023-03-14 or the string
                            'latest'. Overrides --lts.
-  -e,--exclude PATH        Path to file with a list of packages to exclude from
+  -e,--exclusions PATH     Path to file with a list of packages to exclude from
+                           the package list. Each package should be listed on a
+                           separate line, without version numbers.
+  -i,--inclusions PATH     Path to file with a list of packages to include from
                            the package list. Each package should be listed on a
                            separate line, without version numbers.
   -h,--help                Show this help text
@@ -50,7 +54,7 @@ Version: 0.1
 
 ## Pkgs
 
-**Description:** Lists all packages in a given snapshot. Obviously the package list is extremely long, so the examples here are truncated.
+**Description:** Lists all packages in a given snapshot. The package list is extremely long, so the examples here are truncated.
 
 **Usage:**
 
@@ -74,10 +78,10 @@ Available options:
 
 **Examples:**
 
-As producing cabal-compatible stackage output is the main motivation, let us cut to the chase:
+As producing cabal-compatible stackage output is the main motivation, let us get right down to it:
 
 ```
-$ stackage-parse -e examples/exclusions pkgs -f cabal -c append
+$ stackage-parse pkgs -f cabal -c append
 abstract-deque ==0.3,
 abstract-deque-tests ==0.3,
 abstract-par ==0.3.3,
@@ -89,7 +93,30 @@ acc ==0.2.0.1,
 * `pkgs` is the command.
 * `-f cabal` outputs in `cabal` format i.e. `abstract-par ==0.3.3` instead of `abstract-par-0.3.3`.
 * `-c append` appends a comma to each line.
-* `-e exclusions` is a list of package names to be excluded from the package set. For example, if `exclusions` contains the line `text`, then `text` will not appear in the `pkgs` output. This can be useful for excluding packages we know will not build with a library e.g. executables or those requiring C libs. See [the example](examples/exclusions) for more detail.
+
+This will produce a list of every package in the specified stackage snapshot (`stackage nightly` in this example). Because we may not want to include _all_ of stackage (e.g. executables, packages relying on external C libs), there are two ways to refine this list.
+
+### Exclusions
+
+```
+$ stackage-parse pkgs --exclusions exclude-file -f cabal -c append
+abstract-deque ==0.3,
+...
+```
+
+Same as before, except any packages in `exclude-file` will be excluded from the package list. We can use this to exclude packages we **know** we do not want (e.g. because they will not build with our package).
+
+### Inclusions
+
+```
+$ stackage-parse pkgs --inclusions include-file -f cabal -c append
+abstract-deque ==0.3,
+...
+```
+
+Like `--exclusions`, except only packages _in_ `include-file` will be included in the package list. We can use this to, say, upgrade only the packages from a previous snapshot without adding any new, potentially unbuildable packages.
+
+See [examples](examples/) for more details.
 
 ## Snapshot
 

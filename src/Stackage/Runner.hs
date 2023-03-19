@@ -9,12 +9,13 @@ where
 
 import Control.Applicative ((<|>))
 import Control.Exception (throwIO)
-import Control.Monad (unless)
+import Control.Monad (when)
 import Data.Aeson (ToJSON)
 import Data.Aeson qualified as Asn
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (for_)
+import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -55,14 +56,19 @@ withStackageParser onStr = do
           mkSnapshotReqLatestNightly
           (args.nightlySnapshot <|> args.ltsSnapshot)
 
-  excludeFn <- case args.excludeFile of
-    Nothing -> pure (const False)
-    Just f -> getPackageExclusions f
+  filterFn <- case (args.inclusionsFile, args.exclusionsFile) of
+    (Just f, Just g) -> do
+      f' <- getIncludeFn f
+      g' <- getExcludeFn g
+      pure $ \x -> f' x && g' x
+    (Just f, _) -> getIncludeFn f
+    (_, Just g) -> getExcludeFn g
+    (Nothing, Nothing) -> pure (const True)
 
   resp <- getStackage snapshot
   case args.command of
     Full -> onStr $ do
-      let packages = filter (not . excludeFn . (.name)) resp.packages
+      let packages = filter (filterFn . (.name)) resp.packages
       toJson (resp {packages})
     GetSnapshot -> onStr $ toJson resp.snapshot
     ListPackages fmt comma -> do
@@ -76,7 +82,7 @@ withStackageParser onStr = do
             Just CommaPrepend -> commaPrepend
             Nothing -> id
       for_ resp.packages $ \pkg ->
-        unless (excludeFn pkg.name) (onStr . commaFn . fmtFn $ pkg)
+        when (filterFn pkg.name) (onStr . commaFn . fmtFn $ pkg)
   where
     fmtShort p = p.name <> "-" <> p.version
     fmtCabal p = p.name <> " ==" <> p.version
@@ -84,17 +90,21 @@ withStackageParser onStr = do
     commaAppend p = p <> ","
     commaPrepend p = ", " <> p
 
-getPackageExclusions :: FilePath -> IO (Text -> Bool)
-getPackageExclusions path = do
+getExcludeFn :: FilePath -> IO (Text -> Bool)
+getExcludeFn path = (\s -> not . (`Set.member` s)) <$> parsePackageFileList path
+
+getIncludeFn :: FilePath -> IO (Text -> Bool)
+getIncludeFn path = flip Set.member <$> parsePackageFileList path
+
+parsePackageFileList :: FilePath -> IO (HashSet Text)
+parsePackageFileList path = do
   contents <- either throwIO pure . TEnc.decodeUtf8' =<< BS.readFile path
 
-  let excludedSet =
-        Set.fromList
-          . fmap parsePkg
-          . skipLines
-          $ T.lines contents
-
-  pure (`Set.member` excludedSet)
+  pure
+    $ Set.fromList
+      . fmap parsePkg
+      . skipLines
+    $ T.lines contents
   where
     skipLines = filter (\l -> nonComment l && nonEmpty l)
 

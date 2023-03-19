@@ -33,6 +33,8 @@ tests = do
       fullTests,
       testSnapshot,
       testExclude,
+      testInclude,
+      testIncludeExclude,
       test404
     ]
 
@@ -190,28 +192,42 @@ testExclude = testCase "Excludes packages" $ do
   -- verify the below packages are excluded from the results
   [] @=? filter (`Set.member` excluded) (fmap dropVersion results)
   where
-    args = ["--lts", "20.14", "--exclude", "./examples/exclusions", "pkgs"]
-    excluded =
-      Set.fromList
-        [ "pipes",
-          "pipes-attoparsec",
-          "pipes-bytestring",
-          "pipes-concurrency",
-          "pipes-csv",
-          "pipes-extras",
-          "pipes-fastx",
-          "pipes-fluid",
-          "pipes-group",
-          "pipes-http",
-          "pipes-mongodb",
-          "pipes-parse",
-          "pipes-random",
-          "pipes-wai"
-        ]
-    dropVersion = T.intercalate "-" . dropLast . T.split (== '-')
-    dropLast [] = []
-    dropLast [_] = []
-    dropLast (x : xs) = x : dropLast xs
+    args = ["--lts", "20.14", "--exclusions", "./examples/exclusions", "pkgs"]
+    excluded = Set.fromList pipesLibs
+
+testInclude :: TestTree
+testInclude = testCase "Includes packages" $ do
+  results <- run args
+  pipesLibs @=? fmap dropVersion results
+  where
+    args = ["--lts", "20.14", "--inclusions", "./examples/inclusions", "pkgs"]
+
+pipesLibs :: [Text]
+pipesLibs =
+  [ "pipes",
+    "pipes-attoparsec",
+    "pipes-bytestring",
+    "pipes-concurrency",
+    "pipes-csv",
+    "pipes-extras",
+    "pipes-fastx",
+    "pipes-fluid",
+    "pipes-group",
+    "pipes-mongodb",
+    "pipes-ordered-zip",
+    "pipes-parse",
+    "pipes-random",
+    "pipes-safe",
+    "pipes-text",
+    "pipes-wai"
+  ]
+
+testIncludeExclude :: TestTree
+testIncludeExclude = testCase "Includes packages" $ do
+  results <- run args
+  [] @=? fmap dropVersion results
+  where
+    args = ["--lts", "20.14", "-i", "./examples/inclusions", "-e", "./examples/exclusions", "pkgs"]
 
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do
@@ -234,3 +250,11 @@ decodeStr = Asn.eitherDecodeStrict' . TEnc.encodeUtf8
 whenLeft :: (Applicative f) => Either e a -> (e -> f ()) -> f ()
 whenLeft (Left e) f = f e
 whenLeft _ _ = pure ()
+
+dropVersion :: Text -> Text
+dropVersion = T.intercalate "-" . dropLast . T.split (== '-')
+
+dropLast :: [a] -> [a]
+dropLast [] = []
+dropLast [_] = []
+dropLast (x : xs) = x : dropLast xs

@@ -1,4 +1,4 @@
-# excluding some libs
+# including some libs
 pipes
 pipes-attoparsec
 pipes-bytestring

@@ -69,7 +69,9 @@ data Args = MkArgs
     -- | @since 0.1
     nightlySnapshot :: !(Maybe SnapshotReq),
     -- | @since 0.1
-    excludeFile :: !(Maybe FilePath),
+    exclusionsFile :: !(Maybe FilePath),
+    -- | @since 0.1
+    inclusionsFile :: !(Maybe FilePath),
     -- | @since 0.1
     command :: !Command
   }
@@ -132,7 +134,8 @@ argsParser =
   MkArgs
     <$> ltsSnapshotParser
     <*> nightlySnapshotParser
-    <*> excludeFileParser
+    <*> exclusionsFileParser
+    <*> inclusionsFileParser
     <*> commandParser
     <**> OA.helper
     <**> version
@@ -169,12 +172,12 @@ nightlySnapshotParser =
           "Overrides --lts."
         ]
 
-excludeFileParser :: Parser (Maybe FilePath)
-excludeFileParser =
+exclusionsFileParser :: Parser (Maybe FilePath)
+exclusionsFileParser =
   A.optional $
     OA.option OA.str $
       mconcat
-        [ OA.long "exclude",
+        [ OA.long "exclusions",
           OA.short 'e',
           OA.metavar "PATH",
           OA.help helpTxt
@@ -184,7 +187,25 @@ excludeFileParser =
       mconcat
         [ "Path to file with a list of packages to exclude from the package ",
           "list. Each package should be listed on a separate line, without ",
-          "version numbers."
+          "version numbers e.g. text."
+        ]
+
+inclusionsFileParser :: Parser (Maybe FilePath)
+inclusionsFileParser =
+  A.optional $
+    OA.option OA.str $
+      mconcat
+        [ OA.long "inclusions",
+          OA.short 'i',
+          OA.metavar "PATH",
+          OA.help helpTxt
+        ]
+  where
+    helpTxt =
+      mconcat
+        [ "Path to file with a list of packages to include from the package ",
+          "list. Each package should be listed on a separate line, without ",
+          "version numbers e.g. text."
         ]
 
 snapshotParser' ::
