@@ -32,9 +32,15 @@ mkSnapshotReqLts txt =
     [x, y] | nonEmpty x && nonEmpty y ->
       case (readInt x, readInt y) of
         (Just _, Just _) -> Right (UnsafeSnapshotReqLts (Just txt))
-        (Nothing, _) -> Left $ "LTS version should be an integer, received " <> x
-        (_, Nothing) -> Left $ "LTS version should be an integer, received " <> y
-    _ -> Left $ "LTS snapshots have the form XX.YY, received " <> txt
+        (Nothing, _) ->
+          Left $
+            "LTS version should be an integer, received " <> squote x
+        (_, Nothing) ->
+          Left $
+            "LTS version should be an integer, received " <> squote y
+    _ ->
+      Left $
+        "LTS snapshots have the form XX.YY, received " <> squote txt
   where
     readInt :: Text -> Maybe Word16
     readInt = TR.readMaybe . T.unpack
@@ -49,10 +55,18 @@ mkSnapshotReqNightly txt = case T.split (== '-') txt of
   [y, m, d] | nonEmpty y && nonEmpty m && nonEmpty d ->
     case (readYear y, readMonth m, readDay d) of
       (Just _, Just _, Just _) -> Right (UnsafeSnapshotReqNightly (Just txt))
-      (Nothing, _, _) -> Left $ "Year should be an integer between 2000 and 2100, received " <> y
-      (_, Nothing, _) -> Left $ "Month should be an integer between 1 and 12, received " <> m
-      (_, _, Nothing) -> Left $ "Day should be an integer between 1 and 31, received " <> d
-  _ -> Left $ "Nightly snapshots have the form YYYY-MM-DD, received " <> txt
+      (Nothing, _, _) ->
+        Left $
+          "Year should be an integer between 2000 and 2100, received " <> squote y
+      (_, Nothing, _) ->
+        Left $
+          "Month should be an integer between 1 and 12, received " <> squote m
+      (_, _, Nothing) ->
+        Left $
+          "Day should be an integer between 1 and 31, received " <> squote d
+  _ ->
+    Left $
+      "Nightly snapshots have the form YYYY-MM-DD, received " <> squote txt
   where
     readYear = readDecimal @Word16 4 2000 2100
     readMonth = readDecimal @Word8 2 1 12
@@ -68,7 +82,10 @@ mkSnapshotReqNightly txt = case T.split (== '-') txt of
             else Nothing
 
 nonEmpty :: Text -> Bool
-nonEmpty = not . T.null
+nonEmpty = not . T.null . T.strip
+
+squote :: Text -> Text
+squote t = "'" <> t <> "'"
 
 -- | @since 0.1
 unSnapshotIdReq :: SnapshotIdReq -> Text
