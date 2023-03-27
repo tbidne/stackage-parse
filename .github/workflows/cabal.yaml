@@ -33,6 +33,9 @@ jobs:
       - name: Compile
         run: cabal build
 
+      - name: Unit Tests
+        run: cabal test unit
+
       - name: Functional Tests
         run: RUN_FUNCTIONAL=1 cabal test functional
   cabal_windows:
@@ -52,6 +55,9 @@ jobs:
 
       - name: Compile
         run: cabal build
+
+      - name: Unit Tests
+        run: cabal test unit
 
       - name: Functional Tests
         run: |
