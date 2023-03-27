@@ -26,7 +26,7 @@ jobs:
             set-env: "export"
           - os: "windows-latest"
             set-env: "set"
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v3.3.0
 
