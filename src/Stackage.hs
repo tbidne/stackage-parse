@@ -86,7 +86,7 @@ getStackage snapshot = do
 -- | General network exception.
 --
 -- @since 0.1
-data StackageException = MkStackageException SnapshotIdReq ClientError
+data StackageException = MkStackageException !SnapshotIdReq !ClientError
   deriving stock
     ( -- | @since 0.1
       Eq,
