@@ -55,5 +55,5 @@ jobs:
 
       - name: Functional Tests
         run: |
-          set RUN_FUNCTIONAL=1
+          set RUN_FUNC=1
           cabal test functional

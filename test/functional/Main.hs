@@ -20,10 +20,10 @@ import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
 
 main :: IO ()
-main = guardOrElse' "RUN_FUNCTIONAL" ExpectEnvSet runTests warn
+main = guardOrElse' "RUN_FUNC" ExpectEnvSet runTests warn
   where
     runTests = Tasty.defaultMain tests
-    warn = putStrLn "*** Functional tests disabled. Enable with RUN_FUNCTIONAL=1. ***"
+    warn = putStrLn "*** Functional tests disabled. Enable with RUN_FUNC=1. ***"
 
 tests :: TestTree
 tests = do

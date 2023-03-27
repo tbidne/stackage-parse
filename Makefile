@@ -31,7 +31,7 @@ watch:
 	fi
 
 functional:
-	RUN_FUNCTIONAL=1 cabal test functional
+	RUN_FUNC=1 cabal test functional
 
 # ci
 
