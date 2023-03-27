@@ -10,7 +10,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Version.Package qualified as PV
-import Stackage (StackageException404 (..))
+import Stackage (StackageException (..))
 import Stackage.Data.Response (SnapshotResp (..), StackageResp (..))
 import Stackage.Runner (withStackageParser)
 import System.Environment (withArgs)
@@ -231,10 +231,16 @@ testIncludeExclude = testCase "Includes packages" $ do
 
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do
-  try @StackageException404 badRun >>= \case
-    Left (MkStackageException404 _ _) -> pure ()
+  try @StackageException badRun >>= \case
+    Left ex@(MkStackageException _ _) ->
+      case T.stripPrefix prefix (T.pack $ displayException ex) of
+        Nothing ->
+          assertFailure $
+            "Exception did not match expected text: " <> displayException ex
+        Just _ -> pure ()
     Right _ -> assertFailure "Expected 404 exception, received none."
   where
+    prefix = "Received 404 for snapshot: lts-00.99. Is the snapshot correct?"
     badRun = withArgs args $ withStackageParser (const (pure ()))
     args = ["--lts", "00.99", "pkgs"]
 
