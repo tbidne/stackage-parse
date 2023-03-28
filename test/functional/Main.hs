@@ -189,8 +189,9 @@ testSnapshot = testCase "Snapshot command" $ do
 testExclude :: TestTree
 testExclude = testCase "Excludes packages" $ do
   results <- run args
-  -- verify the below packages are excluded from the results
-  [] @=? filter (`Set.member` exclude) (fmap dropVersion results)
+  -- verify that the pipes-* libs are excluded from the results, minus the
+  -- sole one left off: pipes-parse
+  ["pipes-parse"] @=? filter (`Set.member` exclude) (fmap dropVersion results)
   where
     args = ["--lts", "20.14", "--exclude", "./examples/exclude", "pkgs"]
     exclude = Set.fromList pipesLibs
@@ -201,6 +202,14 @@ testInclude = testCase "Includes packages" $ do
   pipesLibs @=? fmap dropVersion results
   where
     args = ["--lts", "20.14", "--include", "./examples/include", "pkgs"]
+
+testIncludeExclude :: TestTree
+testIncludeExclude = testCase "Exclude + include packages" $ do
+  results <- run args
+  -- pipes-parse is the only pkg in include that is not in exclude
+  ["pipes-parse"] @=? fmap dropVersion results
+  where
+    args = ["--lts", "20.14", "-i", "./examples/include", "-e", "./examples/exclude", "pkgs"]
 
 pipesLibs :: [Text]
 pipesLibs =
@@ -221,13 +230,6 @@ pipesLibs =
     "pipes-text",
     "pipes-wai"
   ]
-
-testIncludeExclude :: TestTree
-testIncludeExclude = testCase "Includes packages" $ do
-  results <- run args
-  [] @=? fmap dropVersion results
-  where
-    args = ["--lts", "20.14", "-i", "./examples/include", "-e", "./examples/exclude", "pkgs"]
 
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do

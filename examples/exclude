@@ -10,7 +10,7 @@ pipes-fluid
 pipes-group
 pipes-mongodb
 pipes-ordered-zip
-pipes-parse
+# pipes-parse      # intentionally leaving this one in for testing
 pipes-random
 pipes-safe
 pipes-text
