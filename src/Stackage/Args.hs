@@ -69,9 +69,9 @@ data Args = MkArgs
     -- | @since 0.1
     nightlySnapshot :: !(Maybe SnapshotReq),
     -- | @since 0.1
-    exclusionsFile :: !(Maybe FilePath),
+    excludeFile :: !(Maybe FilePath),
     -- | @since 0.1
-    inclusionsFile :: !(Maybe FilePath),
+    includeFile :: !(Maybe FilePath),
     -- | @since 0.1
     command :: !Command
   }
@@ -134,8 +134,8 @@ argsParser =
   MkArgs
     <$> ltsSnapshotParser
     <*> nightlySnapshotParser
-    <*> exclusionsFileParser
-    <*> inclusionsFileParser
+    <*> excludeFileParser
+    <*> includeFileParser
     <*> commandParser
     <**> OA.helper
     <**> version
@@ -172,12 +172,12 @@ nightlySnapshotParser =
           "Overrides --lts."
         ]
 
-exclusionsFileParser :: Parser (Maybe FilePath)
-exclusionsFileParser =
+excludeFileParser :: Parser (Maybe FilePath)
+excludeFileParser =
   A.optional $
     OA.option OA.str $
       mconcat
-        [ OA.long "exclusions",
+        [ OA.long "exclude",
           OA.short 'e',
           OA.metavar "PATH",
           OA.help helpTxt
@@ -190,12 +190,12 @@ exclusionsFileParser =
           "version numbers e.g. text."
         ]
 
-inclusionsFileParser :: Parser (Maybe FilePath)
-inclusionsFileParser =
+includeFileParser :: Parser (Maybe FilePath)
+includeFileParser =
   A.optional $
     OA.option OA.str $
       mconcat
-        [ OA.long "inclusions",
+        [ OA.long "include",
           OA.short 'i',
           OA.metavar "PATH",
           OA.help helpTxt

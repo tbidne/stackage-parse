@@ -24,7 +24,7 @@
 stackage-parse: A tool for parsing stackage snapshot data.
 
 Usage: stackage-parse [--lts (latest|LTS_STR)] [--nightly (latest|DATE_STR)]
-                      [-e|--exclusions PATH] [-i|--inclusions PATH] COMMAND
+                      [-e|--exclude PATH] [-i|--include PATH] COMMAND
                       [-v|--version]
 
 Available options:
@@ -33,12 +33,12 @@ Available options:
   --nightly (latest|DATE_STR)
                            Nightly snapshot e.g. 2023-03-14 or the string
                            'latest'. Overrides --lts.
-  -e,--exclusions PATH     Path to file with a list of packages to exclude from
+  -e,--exclude PATH        Path to file with a list of packages to exclude from
                            the package list. Each package should be listed on a
-                           separate line, without version numbers.
-  -i,--inclusions PATH     Path to file with a list of packages to include from
+                           separate line, without version numbers e.g. text.
+  -i,--include PATH        Path to file with a list of packages to include from
                            the package list. Each package should be listed on a
-                           separate line, without version numbers.
+                           separate line, without version numbers e.g. text.
   -h,--help                Show this help text
 
 Available commands:
@@ -71,7 +71,7 @@ Available options:
                            be pasted into a cabal file's 'build-depends' e.g.
                            'text ==2.0.1'. Defaults to short.
   -c,--comma (append|prepend)
-                           If given, prepends/append a comma before/after each
+                           If given, prepends/appends a comma before/after each
                            entry.
   -h,--help                Show this help text
 ```
@@ -96,25 +96,25 @@ acc ==0.2.0.1,
 
 This will produce a list of every package in the specified stackage snapshot (`stackage nightly` in this example). Because we may not want to include _all_ of stackage (e.g. executables, packages relying on external C libs), there are two ways to refine this list.
 
-### Exclusions
+### Exclude
 
 ```
-$ stackage-parse pkgs --exclusions exclude-file -f cabal -c append
+$ stackage-parse pkgs --exclude exclude-file -f cabal -c append
 abstract-deque ==0.3,
 ...
 ```
 
 Same as before, except any packages in `exclude-file` will be excluded from the package list. We can use this to exclude packages we **know** we do not want (e.g. because they will not build with our package).
 
-### Inclusions
+### Include
 
 ```
-$ stackage-parse pkgs --inclusions include-file -f cabal -c append
+$ stackage-parse pkgs --include include-file -f cabal -c append
 abstract-deque ==0.3,
 ...
 ```
 
-Like `--exclusions`, except only packages _in_ `include-file` will be included in the package list. We can use this to, say, upgrade only the packages from a previous snapshot without adding any new, potentially unbuildable packages.
+Like `--exclude`, except only packages _in_ `include-file` will be included in the package list. We can use this to, say, upgrade only the packages from a previous snapshot without adding any new, potentially unbuildable packages.
 
 See [examples](examples/) for more details.
 

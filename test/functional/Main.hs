@@ -190,17 +190,17 @@ testExclude :: TestTree
 testExclude = testCase "Excludes packages" $ do
   results <- run args
   -- verify the below packages are excluded from the results
-  [] @=? filter (`Set.member` excluded) (fmap dropVersion results)
+  [] @=? filter (`Set.member` exclude) (fmap dropVersion results)
   where
-    args = ["--lts", "20.14", "--exclusions", "./examples/exclusions", "pkgs"]
-    excluded = Set.fromList pipesLibs
+    args = ["--lts", "20.14", "--exclude", "./examples/exclude", "pkgs"]
+    exclude = Set.fromList pipesLibs
 
 testInclude :: TestTree
 testInclude = testCase "Includes packages" $ do
   results <- run args
   pipesLibs @=? fmap dropVersion results
   where
-    args = ["--lts", "20.14", "--inclusions", "./examples/inclusions", "pkgs"]
+    args = ["--lts", "20.14", "--include", "./examples/include", "pkgs"]
 
 pipesLibs :: [Text]
 pipesLibs =
@@ -227,7 +227,7 @@ testIncludeExclude = testCase "Includes packages" $ do
   results <- run args
   [] @=? fmap dropVersion results
   where
-    args = ["--lts", "20.14", "-i", "./examples/inclusions", "-e", "./examples/exclusions", "pkgs"]
+    args = ["--lts", "20.14", "-i", "./examples/include", "-e", "./examples/exclude", "pkgs"]
 
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do

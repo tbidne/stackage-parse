@@ -2664,4 +2664,4 @@ zippers
 zip-stream
 zlib
 zlib-bindings
-zstd ==0.1.3.0,
+zstd

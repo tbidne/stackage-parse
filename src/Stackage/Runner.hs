@@ -56,7 +56,7 @@ withStackageParser onStr = do
           mkSnapshotReqLatestNightly
           (args.nightlySnapshot <|> args.ltsSnapshot)
 
-  filterFn <- case (args.inclusionsFile, args.exclusionsFile) of
+  filterFn <- case (args.includeFile, args.excludeFile) of
     (Just f, Just g) -> do
       f' <- getIncludeFn f
       g' <- getExcludeFn g
