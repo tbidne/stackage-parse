@@ -30,22 +30,29 @@ Usage: stackage-parse [--lts (latest|LTS_STR)] [--nightly (latest|DATE_STR)]
 Available options:
   --lts (latest|LTS_STR)   LTS snapshot e.g. 20.14 or the string 'latest'.
                            Overridden by --nightly.
+
   --nightly (latest|DATE_STR)
                            Nightly snapshot e.g. 2023-03-14 or the string
                            'latest'. Overrides --lts.
+
   -e,--exclude PATH        Path to file with a list of packages to exclude from
                            the package list. Each package should be listed on a
                            separate line, without version numbers e.g. text.
+
   -i,--include PATH        Path to file with a list of packages to include from
                            the package list. Each package should be listed on a
                            separate line, without version numbers e.g. text.
+
   -h,--help                Show this help text
 
 Available commands:
   full                     Prints full package list and snapshot metadata
                            formatted as json.
+
   pkgs                     Lists all packages in a given snapshot.
+
   snapshot                 Prints snapshot metadata formatted as json.
+
 
 Version: 0.1
 ```
@@ -64,15 +71,18 @@ Usage: stackage-parse pkgs [-f|--format (short|cabal)]
 
   Lists all packages in a given snapshot.
 
+
 Available options:
   -f,--format (short|cabal)
                            Short corresponds to <pkg-name>-<vers> e.g.
                            'text-2.0.1'.Cabal corresponds to format suitable to
                            be pasted into a cabal file's 'build-depends' e.g.
                            'text ==2.0.1'. Defaults to short.
+
   -c,--comma (append|prepend)
                            If given, prepends/appends a comma before/after each
                            entry.
+
   -h,--help                Show this help text
 ```
 
@@ -128,6 +138,7 @@ Usage: stackage-parse snapshot
 
   Prints snapshot metadata formatted as json.
 
+
 Available options:
   -h,--help                Show this help text
 ```
@@ -154,6 +165,7 @@ $ stackage-parse snapshot | jq
 Usage: stackage-parse full
 
   Prints full package list and snapshot metadata formatted as json.
+
 
 Available options:
   -h,--help                Show this help text

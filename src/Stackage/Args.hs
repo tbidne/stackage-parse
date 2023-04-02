@@ -26,6 +26,8 @@ import Options.Applicative
   )
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (..))
+import Options.Applicative.Help.Chunk qualified as Chunk
+import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (..))
 import Stackage.Data.Request
   ( SnapshotReq,
@@ -148,7 +150,7 @@ ltsSnapshotParser =
       mconcat
         [ OA.long "lts",
           OA.metavar "(latest|LTS_STR)",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
     helpTxt =
       mconcat
@@ -164,7 +166,7 @@ nightlySnapshotParser =
       mconcat
         [ OA.long "nightly",
           OA.metavar "(latest|DATE_STR)",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
     helpTxt =
       mconcat
@@ -180,7 +182,7 @@ excludeFileParser =
         [ OA.long "exclude",
           OA.short 'e',
           OA.metavar "PATH",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
   where
     helpTxt =
@@ -198,7 +200,7 @@ includeFileParser =
         [ OA.long "include",
           OA.short 'i',
           OA.metavar "PATH",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
   where
     helpTxt =
@@ -236,14 +238,14 @@ commandParser =
   where
     fullParser = pure Full
     fullHelp =
-      OA.progDesc
+      mkCmdDesc
         "Prints full package list and snapshot metadata formatted as json."
 
     listPackagesParser = ListPackages <$> pkgListFormatParser <*> commaParser
-    listPackagesHelp = OA.progDesc "Lists all packages in a given snapshot."
+    listPackagesHelp = mkCmdDesc "Lists all packages in a given snapshot."
 
     getSnapshotParser = pure GetSnapshot
-    getSnapshotHelp = OA.progDesc "Prints snapshot metadata formatted as json."
+    getSnapshotHelp = mkCmdDesc "Prints snapshot metadata formatted as json."
 
 pkgListFormatParser :: Parser (Maybe PkgListFormat)
 pkgListFormatParser =
@@ -253,7 +255,7 @@ pkgListFormatParser =
         [ OA.long "format",
           OA.short 'f',
           OA.metavar "(short|cabal)",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
   where
     readListFormat =
@@ -276,7 +278,7 @@ commaParser =
         [ OA.long "comma",
           OA.short 'c',
           OA.metavar "(append|prepend)",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
   where
     readComma =
@@ -301,3 +303,17 @@ version = OA.infoOption txt (OA.long "version" <> OA.short 'v')
 
 versNum :: (IsString a) => a
 versNum = "Version: 0.1"
+
+mkHelp :: String -> OA.Mod f a
+mkHelp =
+  OA.helpDoc
+    . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
+
+mkCmdDesc :: String -> InfoMod a
+mkCmdDesc =
+  OA.progDescDoc
+    . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
