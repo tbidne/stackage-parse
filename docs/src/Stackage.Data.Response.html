@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Types returned by stackage API.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage.Data.Response</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier">SnapshotResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/csi46x1m20mzxwba0kiz565nylrs6vds-aeson-2.0.3.0-doc/share/doc/aeson-2.0.3.0/html/src/Data.Aeson.html"><span class="hs-identifier">Data.Aeson</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/csi46x1m20mzxwba0kiz565nylrs6vds-aeson-2.0.3.0-doc/share/doc/aeson-2.0.3.0/html/src/Data.Aeson.Types.FromJSON.html#FromJSON"><span class="hs-identifier">FromJSON</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/csi46x1m20mzxwba0kiz565nylrs6vds-aeson-2.0.3.0-doc/share/doc/aeson-2.0.3.0/html/src/Data.Aeson.Types.ToJSON.html#ToJSON"><span class="hs-identifier">ToJSON</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html"><span class="hs-identifier">GHC.Generics</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier">Generic</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Response returned by primary stackage endpoint e.g.</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- @stackage.org\/lts-20.14@.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-19"></span><span id="local-6989586621679124690"><span id="local-6989586621679124691"></span></span><span class="hs-keyword">data</span><span> </span><span id="StackageResp"><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-var">StackageResp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkStackageResp"><span class="annot"><a href="Stackage.Data.Response.html#MkStackageResp"><span class="hs-identifier hs-var">MkStackageResp</span></a></span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-21"></span><span>    </span><span id="%24sel%3Asnapshot%3AMkStackageResp"><span class="annot"><span class="annottext">StackageResp -&gt; SnapshotResp
+</span><a href="Stackage.Data.Response.html#%24sel%3Asnapshot%3AMkStackageResp"><span class="hs-identifier hs-var hs-var">snapshot</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier hs-type">SnapshotResp</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-23"></span><span>    </span><span id="%24sel%3Apackages%3AMkStackageResp"><span class="annot"><span class="annottext">StackageResp -&gt; [PackageResp]
+</span><a href="Stackage.Data.Response.html#%24sel%3Apackages%3AMkStackageResp"><span class="hs-identifier hs-var hs-var">packages</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">[</span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier hs-type">PackageResp</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-27"></span><span>      </span><span id="local-6989586621679124679"><span id="local-6989586621679124685"><span class="annot"><span class="annottext">StackageResp -&gt; StackageResp -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: StackageResp -&gt; StackageResp -&gt; Bool
+$c/= :: StackageResp -&gt; StackageResp -&gt; Bool
+== :: StackageResp -&gt; StackageResp -&gt; Bool
+$c== :: StackageResp -&gt; StackageResp -&gt; Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-29"></span><span>      </span><span class="annot"><span class="annottext">forall x. Rep StackageResp x -&gt; StackageResp
+forall x. StackageResp -&gt; Rep StackageResp x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cto :: forall x. Rep StackageResp x -&gt; StackageResp
+$cfrom :: forall x. StackageResp -&gt; Rep StackageResp x
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier hs-var hs-var hs-var hs-var">Generic</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-31"></span><span>      </span><span id="local-6989586621679124663"><span id="local-6989586621679124665"><span id="local-6989586621679124673"><span class="annot"><span class="annottext">Int -&gt; StackageResp -&gt; ShowS
+[StackageResp] -&gt; ShowS
+StackageResp -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [StackageResp] -&gt; ShowS
+$cshowList :: [StackageResp] -&gt; ShowS
+show :: StackageResp -&gt; String
+$cshow :: StackageResp -&gt; String
+showsPrec :: Int -&gt; StackageResp -&gt; ShowS
+$cshowsPrec :: Int -&gt; StackageResp -&gt; ShowS
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-35"></span><span>      </span><span id="local-6989586621679124658"><span id="local-6989586621679124660"><span class="annot"><span class="annottext">Value -&gt; Parser [StackageResp]
+Value -&gt; Parser StackageResp
+forall a.
+(Value -&gt; Parser a) -&gt; (Value -&gt; Parser [a]) -&gt; FromJSON a
+parseJSONList :: Value -&gt; Parser [StackageResp]
+$cparseJSONList :: Value -&gt; Parser [StackageResp]
+parseJSON :: Value -&gt; Parser StackageResp
+$cparseJSON :: Value -&gt; Parser StackageResp
+</span><a href="file:///nix/store/csi46x1m20mzxwba0kiz565nylrs6vds-aeson-2.0.3.0-doc/share/doc/aeson-2.0.3.0/html/src/Data.Aeson.Types.FromJSON.html#C%3AFromJSON"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">FromJSON</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679124649"><span id="local-6989586621679124651"><span id="local-6989586621679124653"><span id="local-6989586621679124655"><span class="annot"><span class="annottext">[StackageResp] -&gt; Encoding
+[StackageResp] -&gt; Value
+StackageResp -&gt; Encoding
+StackageResp -&gt; Value
+forall a.
+(a -&gt; Value)
+-&gt; (a -&gt; Encoding)
+-&gt; ([a] -&gt; Value)
+-&gt; ([a] -&gt; Encoding)
+-&gt; ToJSON a
+toEncodingList :: [StackageResp] -&gt; Encoding
+$ctoEncodingList :: [StackageResp] -&gt; Encoding
+toJSONList :: [StackageResp] -&gt; Value
+$ctoJSONList :: [StackageResp] -&gt; Value
+toEncoding :: StackageResp -&gt; Encoding
+$ctoEncoding :: StackageResp -&gt; Encoding
+toJSON :: StackageResp -&gt; Value
+$ctoJSON :: StackageResp -&gt; Value
+</span><a href="file:///nix/store/csi46x1m20mzxwba0kiz565nylrs6vds-aeson-2.0.3.0-doc/share/doc/aeson-2.0.3.0/html/src/Data.Aeson.Types.ToJSON.html#C%3AToJSON"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">ToJSON</span></a></span></span></span></span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | Stackage snapshot data.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-43"></span><span id="local-6989586621679124646"><span id="local-6989586621679124647"></span></span><span class="hs-keyword">data</span><span> </span><span id="SnapshotResp"><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier hs-var">SnapshotResp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkSnapshotResp"><span class="annot"><a href="Stackage.Data.Response.html#MkSnapshotResp"><span class="hs-identifier hs-var">MkSnapshotResp</span></a></span></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-45"></span><span>    </span><span id="%24sel%3Aghc%3AMkSnapshotResp"><span class="annot"><span class="annottext">SnapshotResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Aghc%3AMkSnapshotResp"><span class="hs-identifier hs-var hs-var">ghc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-47"></span><span>    </span><span id="%24sel%3Acreated%3AMkSnapshotResp"><span class="annot"><span class="annottext">SnapshotResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Acreated%3AMkSnapshotResp"><span class="hs-identifier hs-var hs-var">created</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-49"></span><span>    </span><span id="%24sel%3Aname%3AMkSnapshotResp"><span class="annot"><span class="annottext">SnapshotResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Aname%3AMkSnapshotResp"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-51"></span><span>    </span><span id="%24sel%3Acompiler%3AMkSnapshotResp"><span class="annot"><span class="annottext">SnapshotResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Acompiler%3AMkSnapshotResp"><span class="hs-identifier hs-var hs-var">compiler</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-55"></span><span>      </span><span id="local-6989586621679124632"><span id="local-6989586621679124639"><span class="annot"><span class="annottext">SnapshotResp -&gt; SnapshotResp -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: SnapshotResp -&gt; SnapshotResp -&gt; Bool
+$c/= :: SnapshotResp -&gt; SnapshotResp -&gt; Bool
+== :: SnapshotResp -&gt; SnapshotResp -&gt; Bool
+$c== :: SnapshotResp -&gt; SnapshotResp -&gt; Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-57"></span><span>      </span><span class="annot"><span class="annottext">forall x. Rep SnapshotResp x -&gt; SnapshotResp
+forall x. SnapshotResp -&gt; Rep SnapshotResp x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cto :: forall x. Rep SnapshotResp x -&gt; SnapshotResp
+$cfrom :: forall x. SnapshotResp -&gt; Rep SnapshotResp x
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier hs-var hs-var hs-var hs-var">Generic</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-59"></span><span>      </span><span id="local-6989586621679124618"><span id="local-6989586621679124620"><span id="local-6989586621679124628"><span class="annot"><span class="annottext">Int -&gt; SnapshotResp -&gt; ShowS
+[SnapshotResp] -&gt; ShowS
+SnapshotResp -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [SnapshotResp] -&gt; ShowS
+$cshowList :: [SnapshotResp] -&gt; ShowS
+show :: SnapshotResp -&gt; String
+$cshow :: SnapshotResp -&gt; String
+showsPrec :: Int -&gt; SnapshotResp -&gt; ShowS
+$cshowsPrec :: Int -&gt; SnapshotResp -&gt; ShowS
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-63"></span><span>      </span><span id="local-6989586621679124614"><span id="local-6989586621679124616"><span class="annot"><span class="annottext">Value -&gt; Parser [SnapshotResp]
+Value -&gt; Parser SnapshotResp
+forall a.
+(Value -&gt; Parser a) -&gt; (Value -&gt; Parser [a]) -&gt; FromJSON a
+parseJSONList :: Value -&gt; Parser [SnapshotResp]
+$cparseJSONList :: Value -&gt; Parser [SnapshotResp]
+parseJSON :: Value -&gt; Parser SnapshotResp
+$cparseJSON :: Value -&gt; Parser SnapshotResp
+</span><a href="#local-6989586621679124614"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">FromJSON</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-65"></span><span>      </span><span id="local-6989586621679124606"><span id="local-6989586621679124608"><span id="local-6989586621679124610"><span id="local-6989586621679124612"><span class="annot"><span class="annottext">[SnapshotResp] -&gt; Encoding
+[SnapshotResp] -&gt; Value
+SnapshotResp -&gt; Encoding
+SnapshotResp -&gt; Value
+forall a.
+(a -&gt; Value)
+-&gt; (a -&gt; Encoding)
+-&gt; ([a] -&gt; Value)
+-&gt; ([a] -&gt; Encoding)
+-&gt; ToJSON a
+toEncodingList :: [SnapshotResp] -&gt; Encoding
+$ctoEncodingList :: [SnapshotResp] -&gt; Encoding
+toJSONList :: [SnapshotResp] -&gt; Value
+$ctoJSONList :: [SnapshotResp] -&gt; Value
+toEncoding :: SnapshotResp -&gt; Encoding
+$ctoEncoding :: SnapshotResp -&gt; Encoding
+toJSON :: SnapshotResp -&gt; Value
+$ctoJSON :: SnapshotResp -&gt; Value
+</span><a href="#local-6989586621679124606"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">ToJSON</span></a></span></span></span></span></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- | Package in a stackage snapshot.</span><span>
+</span><span id="line-69"></span><span class="hs-comment">--</span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-71"></span><span id="local-6989586621679124604"><span id="local-6989586621679124605"></span></span><span class="hs-keyword">data</span><span> </span><span id="PackageResp"><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier hs-var">PackageResp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPackageResp"><span class="annot"><a href="Stackage.Data.Response.html#MkPackageResp"><span class="hs-identifier hs-var">MkPackageResp</span></a></span></span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-73"></span><span>    </span><span id="%24sel%3Aorigin%3AMkPackageResp"><span class="annot"><span class="annottext">PackageResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Aorigin%3AMkPackageResp"><span class="hs-identifier hs-var hs-var">origin</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-75"></span><span>    </span><span id="%24sel%3Aname%3AMkPackageResp"><span class="annot"><span class="annottext">PackageResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Aname%3AMkPackageResp"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-77"></span><span>    </span><span id="%24sel%3Aversion%3AMkPackageResp"><span class="annot"><span class="annottext">PackageResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Aversion%3AMkPackageResp"><span class="hs-identifier hs-var hs-var">version</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-79"></span><span>    </span><span id="%24sel%3Asynopsis%3AMkPackageResp"><span class="annot"><span class="annottext">PackageResp -&gt; Text
+</span><a href="Stackage.Data.Response.html#%24sel%3Asynopsis%3AMkPackageResp"><span class="hs-identifier hs-var hs-var">synopsis</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Internal.html#Text"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-82"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-83"></span><span>      </span><span id="local-6989586621679124591"><span id="local-6989586621679124597"><span class="annot"><span class="annottext">PackageResp -&gt; PackageResp -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: PackageResp -&gt; PackageResp -&gt; Bool
+$c/= :: PackageResp -&gt; PackageResp -&gt; Bool
+== :: PackageResp -&gt; PackageResp -&gt; Bool
+$c== :: PackageResp -&gt; PackageResp -&gt; Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-85"></span><span>      </span><span class="annot"><span class="annottext">forall x. Rep PackageResp x -&gt; PackageResp
+forall x. PackageResp -&gt; Rep PackageResp x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cto :: forall x. Rep PackageResp x -&gt; PackageResp
+$cfrom :: forall x. PackageResp -&gt; Rep PackageResp x
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier hs-var hs-var hs-var hs-var">Generic</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-87"></span><span>      </span><span id="local-6989586621679124578"><span id="local-6989586621679124580"><span id="local-6989586621679124587"><span class="annot"><span class="annottext">Int -&gt; PackageResp -&gt; ShowS
+[PackageResp] -&gt; ShowS
+PackageResp -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [PackageResp] -&gt; ShowS
+$cshowList :: [PackageResp] -&gt; ShowS
+show :: PackageResp -&gt; String
+$cshow :: PackageResp -&gt; String
+showsPrec :: Int -&gt; PackageResp -&gt; ShowS
+$cshowsPrec :: Int -&gt; PackageResp -&gt; ShowS
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-91"></span><span>      </span><span id="local-6989586621679124574"><span id="local-6989586621679124576"><span class="annot"><span class="annottext">Value -&gt; Parser [PackageResp]
+Value -&gt; Parser PackageResp
+forall a.
+(Value -&gt; Parser a) -&gt; (Value -&gt; Parser [a]) -&gt; FromJSON a
+parseJSONList :: Value -&gt; Parser [PackageResp]
+$cparseJSONList :: Value -&gt; Parser [PackageResp]
+parseJSON :: Value -&gt; Parser PackageResp
+$cparseJSON :: Value -&gt; Parser PackageResp
+</span><a href="#local-6989586621679124574"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">FromJSON</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-92"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-93"></span><span>      </span><span id="local-6989586621679124566"><span id="local-6989586621679124568"><span id="local-6989586621679124570"><span id="local-6989586621679124572"><span class="annot"><span class="annottext">[PackageResp] -&gt; Encoding
+[PackageResp] -&gt; Value
+PackageResp -&gt; Encoding
+PackageResp -&gt; Value
+forall a.
+(a -&gt; Value)
+-&gt; (a -&gt; Encoding)
+-&gt; ([a] -&gt; Value)
+-&gt; ([a] -&gt; Encoding)
+-&gt; ToJSON a
+toEncodingList :: [PackageResp] -&gt; Encoding
+$ctoEncodingList :: [PackageResp] -&gt; Encoding
+toJSONList :: [PackageResp] -&gt; Value
+$ctoJSONList :: [PackageResp] -&gt; Value
+toEncoding :: PackageResp -&gt; Encoding
+$ctoEncoding :: PackageResp -&gt; Encoding
+toJSON :: PackageResp -&gt; Value
+$ctoJSON :: PackageResp -&gt; Value
+</span><a href="#local-6989586621679124566"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">ToJSON</span></a></span></span></span></span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span></pre></body></html>

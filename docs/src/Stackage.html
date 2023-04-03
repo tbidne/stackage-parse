@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * REST queries</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Stackage.html#getLatestLts"><span class="hs-identifier">getLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Stackage.html#getLatestNightly"><span class="hs-identifier">getLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.html#getStackage"><span class="hs-identifier">getStackage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><span class="hs-comment">-- * REST request</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier">mkSnapshotReqLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier">mkSnapshotReqLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier">mkSnapshotReqNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-comment">-- * REST response</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier">SnapshotResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Exceptions</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier">StackageException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Control.Exception.html"><span class="hs-identifier">Control.Exception</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Exception.Type.html#Exception"><span class="hs-identifier">Exception</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Exception.Type.html#displayException"><span class="hs-identifier">displayException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.IO.html#throwIO"><span class="hs-identifier">throwIO</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.html"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/znzia3bkmx1wkswad6qfpixh7gjc6myw-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html"><span class="hs-identifier">Network.HTTP.Types.Status</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/znzia3bkmx1wkswad6qfpixh7gjc6myw-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html#Status"><span class="hs-identifier">Status</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/9s8r78y4q08x6i2c59xi5ssi6cj6swsg-servant-client-0.19-doc/share/doc/servant-client-0.19/html/src/Servant.Client.html"><span class="hs-identifier">Servant.Client</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/8zb8nnkli6h0a3zzlfb8b1yskqgvninn-servant-client-core-0.19-doc/share/doc/servant-client-core-0.19/html/src/Servant.Client.Core.ClientError.html#ClientError"><span class="hs-identifier">ClientError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/9s8r78y4q08x6i2c59xi5ssi6cj6swsg-servant-client-0.19-doc/share/doc/servant-client-0.19/html/src/Servant.Client.html"><span class="hs-identifier">Servant.Client</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ServClient</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.API.html"><span class="hs-identifier">Stackage.API</span></a></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.API.html#getStackageClientEnv"><span class="hs-identifier">getStackageClientEnv</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Stackage.API.html#getStackageResp"><span class="hs-identifier">getStackageResp</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Data.Request.html"><span class="hs-identifier">Stackage.Data.Request</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier">SnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotIdReq"><span class="hs-identifier">mkSnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier">mkSnapshotReqLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier">mkSnapshotReqLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier">mkSnapshotReqNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#unSnapshotIdReq"><span class="hs-identifier">unSnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html"><span class="hs-identifier">Stackage.Data.Response</span></a></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier">SnapshotResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- | Returns the 'StackageResp' for the latest nightly snapshot.</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-57"></span><span class="annot"><a href="Stackage.html#getLatestNightly"><span class="hs-identifier hs-type">getLatestNightly</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-58"></span><span id="getLatestNightly"><span class="annot"><span class="annottext">getLatestNightly :: IO StackageResp
+</span><a href="Stackage.html#getLatestNightly"><span class="hs-identifier hs-var hs-var">getLatestNightly</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var">getStackage</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier hs-var">mkSnapshotReqLatestNightly</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Returns the 'StackageResp' for the latest LTS snapshot.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Stackage.html#getLatestLts"><span class="hs-identifier hs-type">getLatestLts</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-68"></span><span id="getLatestLts"><span class="annot"><span class="annottext">getLatestLts :: IO StackageResp
+</span><a href="Stackage.html#getLatestLts"><span class="hs-identifier hs-var hs-var">getLatestLts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var">getStackage</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier hs-var">mkSnapshotReqLatestLts</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- | Returns the 'StackageResp' corresponding to the given snapshot.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Stackage.html#getStackage"><span class="hs-identifier hs-type">getStackage</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-78"></span><span id="getStackage"><span class="annot"><span class="annottext">getStackage :: SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var hs-var">getStackage</span></a></span></span><span> </span><span id="local-6989586621679125446"><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679125446"><span class="hs-identifier hs-var">snapshot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-79"></span><span>  </span><span id="local-6989586621679125445"><span class="annot"><span class="annottext">ClientEnv
+</span><a href="#local-6989586621679125445"><span class="hs-identifier hs-var">cenv</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO ClientEnv
+</span><a href="Stackage.API.html#getStackageClientEnv"><span class="hs-identifier hs-var">getStackageClientEnv</span></a></span><span>
+</span><span id="line-80"></span><span>  </span><span class="annot"><span class="annottext">forall a. ClientM a -&gt; ClientEnv -&gt; IO (Either ClientError a)
+</span><a href="file:///nix/store/9s8r78y4q08x6i2c59xi5ssi6cj6swsg-servant-client-0.19-doc/share/doc/servant-client-0.19/html/src/Servant.Client.Internal.HttpClient.html#runClientM"><span class="hs-identifier hs-var">ServClient.runClientM</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; ClientM StackageResp
+</span><a href="Stackage.API.html#getStackageResp"><span class="hs-identifier hs-var">getStackageResp</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679125443"><span class="hs-identifier hs-var">snapshotId</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ClientEnv
+</span><a href="#local-6989586621679125445"><span class="hs-identifier hs-var">cenv</span></a></span><span> </span><span class="annot"><span class="annottext">forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3E%3E%3D"><span class="hs-operator hs-var">&gt;&gt;=</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-81"></span><span>    </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Either.html#Left"><span class="hs-identifier hs-type">Left</span></a></span><span> </span><span id="local-6989586621679125442"><span class="annot"><span class="annottext">ClientError
+</span><a href="#local-6989586621679125442"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall e a. Exception e =&gt; e -&gt; IO a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.IO.html#throwIO"><span class="hs-identifier hs-var">throwIO</span></a></span><span> </span><span class="annot"><span class="annottext">forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; ClientError -&gt; StackageException
+</span><a href="Stackage.html#MkStackageException"><span class="hs-identifier hs-var">MkStackageException</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679125443"><span class="hs-identifier hs-var">snapshotId</span></a></span><span> </span><span class="annot"><span class="annottext">ClientError
+</span><a href="#local-6989586621679125442"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Data.Either.html#Right"><span class="hs-identifier hs-type">Right</span></a></span><span> </span><span id="local-6989586621679125440"><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679125440"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#pure"><span class="hs-identifier hs-var">pure</span></a></span><span> </span><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679125440"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-84"></span><span>    </span><span id="local-6989586621679125443"><span class="annot"><span class="annottext">snapshotId :: SnapshotIdReq
+</span><a href="#local-6989586621679125443"><span class="hs-identifier hs-var hs-var">snapshotId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; SnapshotIdReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotIdReq"><span class="hs-identifier hs-var">mkSnapshotIdReq</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679125446"><span class="hs-identifier hs-var">snapshot</span></a></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- | General network exception.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-89"></span><span class="hs-keyword">data</span><span> </span><span id="StackageException"><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier hs-var">StackageException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkStackageException"><span class="annot"><a href="Stackage.html#MkStackageException"><span class="hs-identifier hs-var">MkStackageException</span></a></span></span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier hs-type">SnapshotIdReq</span></a></span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="file:///nix/store/8zb8nnkli6h0a3zzlfb8b1yskqgvninn-servant-client-core-0.19-doc/share/doc/servant-client-core-0.19/html/src/Servant.Client.Core.ClientError.html#ClientError"><span class="hs-identifier hs-type">ClientError</span></a></span><span>
+</span><span id="line-90"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-92"></span><span>      </span><span id="local-6989586621679125432"><span id="local-6989586621679125438"><span class="annot"><span class="annottext">StackageException -&gt; StackageException -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: StackageException -&gt; StackageException -&gt; Bool
+$c/= :: StackageException -&gt; StackageException -&gt; Bool
+== :: StackageException -&gt; StackageException -&gt; Bool
+$c== :: StackageException -&gt; StackageException -&gt; Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-93"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-94"></span><span>      </span><span id="local-6989586621679125419"><span id="local-6989586621679125421"><span id="local-6989586621679125429"><span class="annot"><span class="annottext">Int -&gt; StackageException -&gt; ShowS
+[StackageException] -&gt; ShowS
+StackageException -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [StackageException] -&gt; ShowS
+$cshowList :: [StackageException] -&gt; ShowS
+show :: StackageException -&gt; String
+$cshow :: StackageException -&gt; String
+showsPrec :: Int -&gt; StackageException -&gt; ShowS
+$cshowsPrec :: Int -&gt; StackageException -&gt; ShowS
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-98"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679125410"><span id="local-6989586621679125412"><span class="annot"><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Exception.Type.html#Exception"><span class="hs-identifier hs-type">Exception</span></a></span><span> </span><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier hs-type">StackageException</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-99"></span><span>  </span><span id="local-6989586621679125399"><span class="annot"><span class="annottext">displayException :: StackageException -&gt; String
+</span><a href="#local-6989586621679125399"><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.html#MkStackageException"><span class="hs-identifier hs-type">MkStackageException</span></a></span><span> </span><span id="local-6989586621679125398"><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679125398"><span class="hs-identifier hs-var">snapshot</span></a></span></span><span> </span><span id="local-6989586621679125397"><span class="annot"><span class="annottext">ClientError
+</span><a href="#local-6989586621679125397"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679125396"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="annot"><span class="annottext">forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%3E"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Exception:\n\n&quot;</span></span><span> </span><span class="annot"><span class="annottext">forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#%3C%3E"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">forall e. Exception e =&gt; e -&gt; String
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Exception.Type.html#displayException"><span class="hs-identifier hs-var">displayException</span></a></span><span> </span><span class="annot"><span class="annottext">ClientError
+</span><a href="#local-6989586621679125397"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-101"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-102"></span><span>      </span><span id="local-6989586621679125396"><span class="annot"><span class="annottext">msg :: String
+</span><a href="#local-6989586621679125396"><span class="hs-identifier hs-var hs-var">msg</span></a></span></span><span>
+</span><span id="line-103"></span><span>        </span><span class="hs-comment">-- Slightly more specific error for 404s since this is likely to be</span><span>
+</span><span id="line-104"></span><span>        </span><span class="hs-comment">-- the most common error.</span><span>
+</span><span id="line-105"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679125387"><span class="hs-identifier hs-var">is404</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-106"></span><span>            </span><span class="annot"><span class="annottext">forall a. Monoid a =&gt; [a] -&gt; a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#mconcat"><span class="hs-identifier hs-var">mconcat</span></a></span><span>
+</span><span id="line-107"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Received 404 for snapshot: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-108"></span><span>                </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">T.unpack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; Text
+</span><a href="Stackage.Data.Request.html#unSnapshotIdReq"><span class="hs-identifier hs-var">unSnapshotIdReq</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679125398"><span class="hs-identifier hs-var">snapshot</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-109"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;. Is the snapshot correct? &quot;</span></span><span>
+</span><span id="line-110"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-111"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-112"></span><span>            </span><span class="annot"><span class="annottext">forall a. Monoid a =&gt; [a] -&gt; a
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Base.html#mconcat"><span class="hs-identifier hs-var">mconcat</span></a></span><span>
+</span><span id="line-113"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Received exception for snapshot: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-114"></span><span>                </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/text-1.2.5.0/src/Data.Text.Show.html#unpack"><span class="hs-identifier hs-var">T.unpack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; Text
+</span><a href="Stackage.Data.Request.html#unSnapshotIdReq"><span class="hs-identifier hs-var">unSnapshotIdReq</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679125398"><span class="hs-identifier hs-var">snapshot</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-115"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;.&quot;</span></span><span>
+</span><span id="line-116"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-117"></span><span>      </span><span id="local-6989586621679125387"><span class="annot"><span class="annottext">is404 :: Bool
+</span><a href="#local-6989586621679125387"><span class="hs-identifier hs-var hs-var">is404</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ClientError
+</span><a href="#local-6989586621679125397"><span class="hs-identifier hs-var">err</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-118"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/8zb8nnkli6h0a3zzlfb8b1yskqgvninn-servant-client-core-0.19-doc/share/doc/servant-client-core-0.19/html/src/Servant.Client.Core.ClientError.html#FailureResponse"><span class="hs-identifier hs-type">FailureResponse</span></a></span><span> </span><span class="annot"><span class="annottext">RequestF () (BaseUrl, ByteString)
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679125378"><span class="annot"><span class="annottext">Response
+</span><a href="#local-6989586621679125378"><span class="hs-identifier hs-var">response</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-119"></span><span>          </span><span class="annot"><span class="annottext">Response
+</span><a href="#local-6989586621679125378"><span class="hs-identifier hs-var">response</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">responseStatusCode</span><span class="hs-operator">.</span><span class="hs-identifier">statusCode</span><span> </span><span class="annot"><span class="annottext">forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#%3D%3D"><span class="hs-operator hs-var">==</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">404</span></span><span>
+</span><span id="line-120"></span><span>        </span><span class="annot"><span class="annottext">ClientError
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="file:///nix/store/ikg4fg60pkwb0mv87d3c4q5r7w15f1hb-ghc-9.2.7-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Types.html#False"><span class="hs-identifier hs-var">False</span></a></span><span>
+</span><span id="line-121"></span></pre></body></html>
