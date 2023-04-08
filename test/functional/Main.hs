@@ -193,7 +193,7 @@ testExclude = testCase "Excludes packages" $ do
   -- sole one left off: pipes-parse
   ["pipes-parse"] @=? filter (`Set.member` exclude) (fmap dropVersion results)
   where
-    args = ["--lts", "20.14", "--exclude", "./examples/exclude", "pkgs"]
+    args = ["--lts", "20.14", "--exclude", "./examples/exclude/pipes-no-parse", "pkgs"]
     exclude = Set.fromList pipesLibs
 
 testInclude :: TestTree
@@ -201,7 +201,7 @@ testInclude = testCase "Includes packages" $ do
   results <- run args
   pipesLibs @=? fmap dropVersion results
   where
-    args = ["--lts", "20.14", "--include", "./examples/include", "pkgs"]
+    args = ["--lts", "20.14", "--include", "./examples/include/pipes", "pkgs"]
 
 testIncludeExclude :: TestTree
 testIncludeExclude = testCase "Exclude + include packages" $ do
@@ -209,7 +209,15 @@ testIncludeExclude = testCase "Exclude + include packages" $ do
   -- pipes-parse is the only pkg in include that is not in exclude
   ["pipes-parse"] @=? fmap dropVersion results
   where
-    args = ["--lts", "20.14", "-i", "./examples/include", "-e", "./examples/exclude", "pkgs"]
+    args =
+      [ "--lts",
+        "20.14",
+        "-i",
+        "./examples/include/pipes",
+        "-e",
+        "./examples/exclude/pipes-no-parse",
+        "pkgs"
+      ]
 
 pipesLibs :: [Text]
 pipesLibs =

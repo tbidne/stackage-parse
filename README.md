@@ -109,17 +109,25 @@ This will produce a list of every package in the specified stackage snapshot (`s
 ### Exclude
 
 ```
-$ stackage-parse pkgs --exclude exclude-file -f cabal -c append
+$ stackage-parse --exclude exclude-file pkgs -f cabal -c append
 abstract-deque ==0.3,
 ...
 ```
 
 Same as before, except any packages in `exclude-file` will be excluded from the package list. We can use this to exclude packages we **know** we do not want (e.g. because they will not build with our package).
 
+The [clc-stackage/exclude](clc-stackage/exclude) directory contains files for building most of stackage, excluding packages like executables or those that require system libs. For instance, to get an appropriate `build-depends` for GHC 9.4.4:
+
+```
+$ stackage-parse --nightly 2023-04-05 -e clc-stackage/exclude/nightly-2023-04-05 pkgs -f cabal -c append
+abstract-deque ==0.3,
+...
+```
+
 ### Include
 
 ```
-$ stackage-parse pkgs --include include-file -f cabal -c append
+$ stackage-parse --include include-file pkgs -f cabal -c append
 abstract-deque ==0.3,
 ...
 ```
