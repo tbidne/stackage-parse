@@ -138,9 +138,9 @@ argsParser =
     <*> nightlySnapshotParser
     <*> excludeFileParser
     <*> includeFileParser
-    <*> commandParser
     <**> OA.helper
     <**> version
+    <*> commandParser
 
 ltsSnapshotParser :: Parser (Maybe SnapshotReq)
 ltsSnapshotParser =
