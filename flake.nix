@@ -8,8 +8,9 @@
   inputs.nix-hs-utils = {
     url = "github:tbidne/nix-hs-utils";
     inputs.flake-compat.follows = "flake-compat";
+    inputs.nixpkgs.follows = "nixpkgs";
   };
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs?rev=5a1dc8acd977ff3dccd1328b7c4a6995429a656b";
   outputs =
     inputs@{ flake-compat
     , flake-parts
@@ -21,10 +22,9 @@
       perSystem = { pkgs, ... }:
         let
           hlib = pkgs.haskell.lib;
-          ghc-version = "ghc945";
+          ghc-version = "ghc927";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
-              apply-refact = prev.apply-refact_0_12_0_0;
               package-version = hlib.doJailbreak prev.package-version;
             };
           };
