@@ -10,10 +10,15 @@ module Stackage.API
 where
 
 import Data.Functor ((<&>))
-import Data.Proxy (Proxy (..))
+import Data.Proxy (Proxy (Proxy))
 import Network.HTTP.Client.TLS qualified as TLS
 import Servant.API (Capture, Get, JSON, (:>))
-import Servant.Client (BaseUrl (..), ClientEnv, ClientM, Scheme (..))
+import Servant.Client
+  ( BaseUrl (BaseUrl),
+    ClientEnv,
+    ClientM,
+    Scheme (Https),
+  )
 import Servant.Client qualified as ServClient
 import Stackage.Data.Request (SnapshotIdReq)
 import Stackage.Data.Response (StackageResp)

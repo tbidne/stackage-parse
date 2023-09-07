@@ -9,4 +9,4 @@ mkdir -p docs/
 # shellcheck disable=SC2038
 find docs/ -type f | xargs -I % sh -c "rm -r %"
 
-cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.7/stackage-parse-0.1/opt/doc/html/stackage-parse/* docs/
+cp -r dist-newstyle/build/x86_64-linux/ghc-*/stackage-parse-0.1/opt/doc/html/stackage-parse/* docs/

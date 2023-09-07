@@ -21,14 +21,23 @@ import Options.Applicative
     Mod,
     OptionFields,
     Parser,
-    ParserInfo (..),
+    ParserInfo
+      ( ParserInfo,
+        infoFailureCode,
+        infoFooter,
+        infoFullDesc,
+        infoHeader,
+        infoParser,
+        infoPolicy,
+        infoProgDesc
+      ),
     (<**>),
   )
 import Options.Applicative qualified as OA
-import Options.Applicative.Help.Chunk (Chunk (..))
+import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Options.Applicative.Types (ArgPolicy (..))
+import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Stackage.Data.Request
   ( SnapshotReq,
     mkSnapshotReqLatestLts,
@@ -138,8 +147,8 @@ argsParser =
     <*> nightlySnapshotParser
     <*> excludeFileParser
     <*> includeFileParser
-    <**> OA.helper
-    <**> version
+      <**> OA.helper
+      <**> version
     <*> commandParser
 
 ltsSnapshotParser :: Parser (Maybe SnapshotReq)

@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Control.Exception (Exception (..), try)
+import Control.Exception (Exception (displayException), try)
 import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Asn
 import Data.Foldable (traverse_)
@@ -10,11 +10,14 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Version.Package qualified as PV
-import Stackage (StackageException (..))
-import Stackage.Data.Response (SnapshotResp (..), StackageResp (..))
+import Stackage (StackageException (MkStackageException))
+import Stackage.Data.Response
+  ( SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
+    StackageResp (snapshot),
+  )
 import Stackage.Runner (withStackageParser)
 import System.Environment (withArgs)
-import System.Environment.Guard (ExpectEnv (..), guardOrElse')
+import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))

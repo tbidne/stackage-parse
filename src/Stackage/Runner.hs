@@ -23,16 +23,16 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncError
 import Stackage
-  ( PackageResp (..),
-    StackageResp (..),
+  ( PackageResp (name, version),
+    StackageResp (packages, snapshot),
     getStackage,
     mkSnapshotReqLatestNightly,
   )
 import Stackage.Args
-  ( Args (..),
-    Comma (..),
-    Command (..),
-    PkgListFormat (..),
+  ( Args (command, excludeFile, includeFile, ltsSnapshot, nightlySnapshot),
+    Comma (CommaAppend, CommaPrepend),
+    Command (Full, GetSnapshot, ListPackages),
+    PkgListFormat (PkgListCabal, PkgListShort),
     getArgs,
   )
 

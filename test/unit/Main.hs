@@ -1,7 +1,12 @@
 module Main (main) where
 
 import Stackage.Data.Request qualified as Request
-import Stackage.Data.Request.Internal (SnapshotReq (..))
+import Stackage.Data.Request.Internal
+  ( SnapshotReq
+      ( UnsafeSnapshotReqLts,
+        UnsafeSnapshotReqNightly
+      ),
+  )
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (testCase, (@=?))

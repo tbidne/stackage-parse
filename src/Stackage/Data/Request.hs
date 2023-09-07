@@ -17,7 +17,10 @@ import Control.Monad ((>=>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16, Word8)
-import Stackage.Data.Request.Internal (SnapshotIdReq (..), SnapshotReq (..))
+import Stackage.Data.Request.Internal
+  ( SnapshotIdReq (MkSnapshotIdReq, UnsafeSnapshotIdReq),
+    SnapshotReq (UnsafeSnapshotReqLts, UnsafeSnapshotReqNightly),
+  )
 import Text.Read qualified as TR
 
 -- | @since 0.1

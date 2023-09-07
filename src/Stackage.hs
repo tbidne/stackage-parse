@@ -24,8 +24,8 @@ where
 
 import Control.Exception (Exception (displayException), throwIO)
 import Data.Text qualified as T
-import Network.HTTP.Types.Status (Status (..))
-import Servant.Client (ClientError (..))
+import Network.HTTP.Types.Status (Status (statusCode))
+import Servant.Client (ClientError (FailureResponse))
 import Servant.Client qualified as ServClient
 import Stackage.API
   ( getStackageClientEnv,
@@ -42,9 +42,9 @@ import Stackage.Data.Request
     unSnapshotIdReq,
   )
 import Stackage.Data.Response
-  ( PackageResp (..),
-    SnapshotResp (..),
-    StackageResp (..),
+  ( PackageResp (MkPackageResp, name, origin, synopsis, version),
+    SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
+    StackageResp (MkStackageResp, packages, snapshot),
   )
 
 -- | Returns the 'StackageResp' for the latest nightly snapshot.

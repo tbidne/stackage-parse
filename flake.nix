@@ -1,19 +1,11 @@
 {
   description = "Parsing stackage";
-  inputs.flake-compat = {
-    url = "github:edolstra/flake-compat";
-    flake = false;
-  };
+
   inputs.flake-parts.url = "github:hercules-ci/flake-parts";
-  inputs.nix-hs-utils = {
-    url = "github:tbidne/nix-hs-utils";
-    inputs.flake-compat.follows = "flake-compat";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-  inputs.nixpkgs.url = "github:nixos/nixpkgs?rev=5a1dc8acd977ff3dccd1328b7c4a6995429a656b";
+  inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   outputs =
-    inputs@{ flake-compat
-    , flake-parts
+    inputs@{ flake-parts
     , nix-hs-utils
     , nixpkgs
     , self
@@ -22,10 +14,13 @@
       perSystem = { pkgs, ... }:
         let
           hlib = pkgs.haskell.lib;
-          ghc-version = "ghc927";
+          ghc-version = "ghc962";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
-              package-version = hlib.doJailbreak prev.package-version;
+              hlint = prev.hlint_3_6_1;
+              ormolu = prev.ormolu_0_7_1_0;
+              package-version =
+                hlib.dontCheck (final.callHackage "package-version" "0.3" { });
             };
           };
           mkPkg = returnShellEnv:
@@ -34,22 +29,16 @@
               name = "stackage-parse";
               root = ./.;
             };
-          hs-dirs = "app src test";
+          compilerPkgs = { inherit compiler pkgs; };
         in
         {
           packages.default = mkPkg false;
           devShells.default = mkPkg true;
 
           apps = {
-            format = nix-hs-utils.format {
-              inherit compiler hs-dirs pkgs;
-            };
-            lint = nix-hs-utils.lint {
-              inherit compiler hs-dirs pkgs;
-            };
-            lint-refactor = nix-hs-utils.lint-refactor {
-              inherit compiler hs-dirs pkgs;
-            };
+            format = nix-hs-utils.format compilerPkgs;
+            lint = nix-hs-utils.lint compilerPkgs;
+            lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
           };
         };
       systems = [
