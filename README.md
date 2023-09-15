@@ -2,7 +2,6 @@
 
 # stackage-parse
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/stackage-parse?include_prereleases&sort=semver)](https://github.com/tbidne/stackage-parse/releases/)
 [![ci](http://img.shields.io/github/actions/workflow/status/tbidne/stackage-parse/ci.yaml?branch=main)](https://github.com/tbidne/stackage-parse/actions/workflows/ci.yaml)
 [![MIT](https://img.shields.io/github/license/tbidne/stackage-parse?color=blue)](https://opensource.org/licenses/MIT)
 
