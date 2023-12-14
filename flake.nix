@@ -14,11 +14,11 @@
       perSystem = { pkgs, ... }:
         let
           hlib = pkgs.haskell.lib;
-          ghc-version = "ghc962";
+          ghc-version = "ghc963";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
               hlint = prev.hlint_3_6_1;
-              ormolu = prev.ormolu_0_7_1_0;
+              ormolu = prev.ormolu_0_7_2_0;
               package-version =
                 hlib.dontCheck (final.callHackage "package-version" "0.3" { });
             };
