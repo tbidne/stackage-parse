@@ -18,8 +18,9 @@ jobs:
       matrix:
         ghc:
           - "9.2.8"
-          - "9.4.6"
-          - "9.6.2"
+          - "9.4.7"
+          - "9.6.3"
+          - "9.8.1"
         platform:
           - os: "macos-latest"
             set-env: "export"
@@ -36,15 +37,15 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
 
       - name: Compile
-        run: cabal build
+        run: cabal build --enable-tests
 
       - name: Unit Tests
-        run: cabal test unit
+        run: cabal test --enable-tests unit
 
       - name: Functional Tests
         run: |
           ${{ matrix.platform.set-env }} RUN_FUNC=1
-          cabal test functional
+          cabal test --enable-tests functional
   nix:
     strategy:
       fail-fast: false
