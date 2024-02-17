@@ -60,7 +60,7 @@ library
     , http-client           >=0.5.9    && <0.8
     , http-client-tls       ^>=0.3
     , http-types            ^>=0.12.3
-    , json                  ^>=0.11
+    , json                  >=0.10     && <0.12
     , optparse-applicative  >=0.16.1.0 && <0.19
     , text                  >=1.2.3.2  && <2.2
     , unordered-containers  ^>=0.2.9.0
