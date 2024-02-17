@@ -8,7 +8,6 @@ module Stackage.Data.Request.Internal
 where
 
 import Data.Text (Text)
-import Servant.API (ToHttpApiData)
 
 -- | Stackage snapshots.
 --
@@ -39,9 +38,7 @@ newtype SnapshotIdReq = UnsafeSnapshotIdReq Text
     )
   deriving
     ( -- | @since 0.1
-      Show,
-      -- | @since 0.1
-      ToHttpApiData
+      Show
     )
     via Text
 

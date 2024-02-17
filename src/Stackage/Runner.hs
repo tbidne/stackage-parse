@@ -10,10 +10,7 @@ where
 import Control.Applicative ((<|>))
 import Control.Exception (throwIO)
 import Control.Monad (when)
-import Data.Aeson (ToJSON)
-import Data.Aeson qualified as Asn
 import Data.ByteString qualified as BS
-import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (for_)
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
@@ -21,7 +18,6 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
-import Data.Text.Encoding.Error qualified as TEncError
 import Stackage
   ( PackageResp (name, version),
     StackageResp (packages, snapshot),
@@ -35,6 +31,8 @@ import Stackage.Args
     PkgListFormat (PkgListCabal, PkgListShort),
     getArgs,
   )
+import Text.JSON (JSON)
+import Text.JSON qualified as JSON
 
 -- | Parses CLI 'Args' and queries stackage. Results are printed.
 --
@@ -119,8 +117,5 @@ parsePackageFileList path = do
     nonComment = not . T.isPrefixOf "#" . T.strip
     nonEmpty = not . T.null . T.strip
 
-toJson :: (ToJSON a) => a -> Text
-toJson =
-  TEnc.decodeUtf8With TEncError.lenientDecode
-    . BSL.toStrict
-    . Asn.encode
+toJson :: (JSON a) => a -> Text
+toJson = T.pack . JSON.encode

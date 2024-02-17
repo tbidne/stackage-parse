@@ -1,16 +1,14 @@
 module Main (main) where
 
 import Control.Exception (Exception (displayException), try)
-import Data.Aeson (FromJSON)
-import Data.Aeson qualified as Asn
 import Data.Foldable (traverse_)
 import Data.HashSet qualified as Set
 import Data.IORef (modifyIORef', newIORef, readIORef)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TEnc
 import Data.Version.Package qualified as PV
-import Stackage (StackageException (MkStackageException))
+import Stackage (StackageException)
+import Stackage.Utils qualified as Utils
 import Stackage.Data.Response
   ( SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
     StackageResp (snapshot),
@@ -21,6 +19,8 @@ import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
+import Text.JSON (JSON)
+import Text.JSON qualified as JSON
 
 main :: IO ()
 main = guardOrElse' "RUN_FUNC" ExpectEnvSet runTests warn
@@ -245,7 +245,7 @@ pipesLibs =
 test404 :: TestTree
 test404 = testCase "Throws 404" $ do
   try @StackageException badRun >>= \case
-    Left ex@(MkStackageException _ _) ->
+    Left ex ->
       case T.stripPrefix prefix (T.pack $ displayException ex) of
         Nothing ->
           assertFailure $
@@ -263,8 +263,8 @@ run args = do
   withArgs args $ withStackageParser (\s -> modifyIORef' ref (s :))
   reverse <$> readIORef ref
 
-decodeStr :: (FromJSON a) => Text -> Either String a
-decodeStr = Asn.eitherDecodeStrict' . TEnc.encodeUtf8
+decodeStr :: (JSON a) => Text -> Either String a
+decodeStr = Utils.jsonResultToEither . JSON.decode . T.unpack
 
 whenLeft :: (Applicative f) => Either e a -> (e -> f ()) -> f ()
 whenLeft (Left e) f = f e

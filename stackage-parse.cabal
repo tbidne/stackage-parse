@@ -45,6 +45,7 @@ library
   import:           common-lang
   exposed-modules:
     Stackage
+    Stackage.Utils
     Stackage.API
     Stackage.Args
     Stackage.Data.Request
@@ -53,14 +54,13 @@ library
     Stackage.Runner
 
   build-depends:
-    , aeson                 >=2.0      && <2.3
     , base                  >=4.16.0.0 && <4.20
     , bytestring            >=0.11.1.0 && <13
+    , http-client           >=0.5.9    && <0.8
     , http-client-tls       ^>=0.3
     , http-types            ^>=0.12.3
+    , json                  ^>=0.11
     , optparse-applicative  >=0.16.1.0 && <0.19
-    , servant               >=0.19     && <0.21
-    , servant-client        >=0.19     && <0.21
     , text                  >=1.2.3.2  && <2.2
     , unordered-containers  ^>=0.2.9.0
 
@@ -97,9 +97,9 @@ test-suite functional
   hs-source-dirs:   test/functional
   default-language: GHC2021
   build-depends:
-    , aeson
     , base
     , env-guard             ^>=0.2
+    , json
     , package-version       ^>=0.3
     , stackage-parse
     , tasty

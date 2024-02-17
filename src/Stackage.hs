@@ -19,17 +19,26 @@ module Stackage
 
     -- * Exceptions
     StackageException (..),
+    ExceptionReason (..)
   )
 where
 
-import Control.Exception (Exception (displayException), throwIO)
+import Control.Exception
+  ( Exception (displayException),
+    SomeException,
+    throwIO,
+  )
+import Control.Monad (when)
 import Data.Text qualified as T
-import Network.HTTP.Types.Status (Status (statusCode))
-import Servant.Client (ClientError (FailureResponse))
-import Servant.Client qualified as ServClient
+import Data.Text.Encoding qualified as TEnc
+import Data.Text.Encoding.Error (UnicodeException)
+import Network.HTTP.Client (Response)
+import Network.HTTP.Client qualified as HttpClient
+import Network.HTTP.Types.Status (Status)
+import Network.HTTP.Types.Status qualified as Status
+import Stackage.Utils qualified as Utils
 import Stackage.API
-  ( getStackageClientEnv,
-    getStackageResp,
+  ( withResponse,
   )
 import Stackage.Data.Request
   ( SnapshotIdReq,
@@ -46,6 +55,7 @@ import Stackage.Data.Response
     SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
     StackageResp (MkStackageResp, packages, snapshot),
   )
+import Text.JSON qualified as JSON
 
 -- | Returns the 'StackageResp' for the latest nightly snapshot.
 --
@@ -75,46 +85,96 @@ getLatestLts = getStackage mkSnapshotReqLatestLts
 --
 -- @since 0.1
 getStackage :: SnapshotReq -> IO StackageResp
-getStackage snapshot = do
-  cenv <- getStackageClientEnv
-  ServClient.runClientM (getStackageResp snapshotId) cenv >>= \case
-    Left err -> throwIO $ MkStackageException snapshotId err
-    Right str -> pure str
+getStackage snapshot = withResponse snapshotId $ \res -> do
+  let bodyReader = HttpClient.responseBody res
+      status = HttpClient.responseStatus res
+      statusCode = getStatusCode res
+      mkEx = MkStackageException snapshotId
+
+  when (statusCode /= 200) $
+    throwIO $
+      mkEx (ReasonStatus status)
+
+  bodyBs <-
+    Utils.mapThrowLeft
+      (mkEx . ReasonReadBody)
+      =<< Utils.tryAny (mconcat <$> HttpClient.brConsume bodyReader)
+
+  bodyTxt <-
+    Utils.mapThrowLeft
+      (mkEx . ReasonDecodeUtf8)
+      (TEnc.decodeUtf8' bodyBs)
+
+  let bodyStr = T.unpack bodyTxt
+
+  Utils.mapThrowLeft
+    (mkEx . ReasonDecodeJson bodyStr)
+    (Utils.jsonResultToEither . JSON.decode $ bodyStr)
   where
     snapshotId = mkSnapshotIdReq snapshot
+
+getStatusCode :: Response body -> Int
+getStatusCode = Status.statusCode . HttpClient.responseStatus
+
+data ExceptionReason
+  = ReasonStatus Status
+  | ReasonReadBody SomeException
+  | ReasonDecodeUtf8 UnicodeException
+  | ReasonDecodeJson String String
+  deriving stock
+    ( -- | @since 0.1
+      Show
+    )
 
 -- | General network exception.
 --
 -- @since 0.1
-data StackageException = MkStackageException !SnapshotIdReq !ClientError
+data StackageException = MkStackageException
+  { snapshotIdReq :: !SnapshotIdReq,
+    reason :: !ExceptionReason
+  }
   deriving stock
     ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
       Show
     )
 
--- | @since 0.1
 instance Exception StackageException where
-  displayException (MkStackageException snapshot err) =
-    msg <> "Exception:\n\n" <> displayException err
-    where
-      msg
-        -- Slightly more specific error for 404s since this is likely to be
-        -- the most common error.
-        | is404 =
+  displayException ex =
+    case ex.reason of
+      ReasonStatus status ->
+        if is404 status
+          then
             mconcat
               [ "Received 404 for snapshot: ",
-                T.unpack (unSnapshotIdReq snapshot),
-                ". Is the snapshot correct? "
+                snapshotIdTxt,
+                ". Is the snapshot correct?"
               ]
-        | otherwise =
+          else
             mconcat
               [ "Received exception for snapshot: ",
-                T.unpack (unSnapshotIdReq snapshot),
-                "."
+                snapshotIdTxt
               ]
-      is404 = case err of
-        (FailureResponse _ response) ->
-          response.responseStatusCode.statusCode == 404
-        _ -> False
+      ReasonReadBody readBodyEx ->
+        mconcat
+          [ "Exception when trying to read body for snapshot '",
+            snapshotIdTxt,
+            "':\n\n",
+            displayException readBodyEx
+          ]
+      ReasonDecodeUtf8 decodeUtf8Ex ->
+        mconcat
+          [ "Exception decoding body to UTF-8 for snapshot '",
+            snapshotIdTxt,
+            "':\n\n",
+            displayException decodeUtf8Ex
+          ]
+      ReasonDecodeJson jsonStr err ->
+        mconcat
+          [ "Could not decode JSON:\n\n",
+            jsonStr,
+            "\n\nError: ",
+            err
+          ]
+    where
+      snapshotIdTxt = T.unpack (unSnapshotIdReq ex.snapshotIdReq)
+      is404 x = Status.statusCode x == 404

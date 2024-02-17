@@ -2,55 +2,30 @@
 --
 -- @since 0.1
 module Stackage.API
-  ( StackageAPI,
-    stackageAPI,
-    getStackageResp,
-    getStackageClientEnv,
+  ( withResponse,
   )
 where
 
-import Data.Functor ((<&>))
-import Data.Proxy (Proxy (Proxy))
+import Data.Text qualified as T
+import Network.HTTP.Client (BodyReader, Request, Response)
+import Network.HTTP.Client qualified as HttpClient
 import Network.HTTP.Client.TLS qualified as TLS
-import Servant.API (Capture, Get, JSON, (:>))
-import Servant.Client
-  ( BaseUrl (BaseUrl),
-    ClientEnv,
-    ClientM,
-    Scheme (Https),
-  )
-import Servant.Client qualified as ServClient
-import Stackage.Data.Request (SnapshotIdReq)
-import Stackage.Data.Response (StackageResp)
+import Stackage.Data.Request (SnapshotIdReq (MkSnapshotIdReq))
 
--- | Stackage API
---
--- @since 0.1
-type StackageAPI = Capture "snapshot" SnapshotIdReq :> Get '[JSON] StackageResp
+withResponse :: SnapshotIdReq -> (Response BodyReader -> IO a) -> IO a
+withResponse idReq onResponse = do
+  manager <- TLS.newTlsManager
+  req <- getRequest idReq
+  HttpClient.withResponse req manager onResponse
 
--- | Stackage API
---
--- @since 0.1
-stackageAPI :: Proxy StackageAPI
-stackageAPI = Proxy
-
--- | GET 'StackageResp'.
---
--- @since 0.1
-getStackageResp :: SnapshotIdReq -> ClientM StackageResp
-getStackageResp = ServClient.client stackageAPI
-
--- | 'ClientEnv' for 'StackageAPI'.
---
--- @since 0.1
-getStackageClientEnv :: IO ClientEnv
-getStackageClientEnv =
-  TLS.newTlsManager <&> \m -> ServClient.mkClientEnv m baseUrl
+getRequest :: SnapshotIdReq -> IO Request
+getRequest (MkSnapshotIdReq idReq) = updateReq <$> mkReq
   where
-    baseUrl =
-      BaseUrl
-        { baseUrlScheme = Https,
-          baseUrlHost = "stackage.org",
-          baseUrlPort = 443,
-          baseUrlPath = "/"
+    url = "https://stackage.org/" <> T.unpack idReq
+    mkReq = HttpClient.parseRequest url
+    updateReq r =
+      r
+        { HttpClient.requestHeaders =
+            [ ("Accept", "application/json;charset=utf-8,application/json")
+            ]
         }
