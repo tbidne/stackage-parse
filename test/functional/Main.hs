@@ -8,12 +8,12 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
 import Stackage (StackageException)
-import Stackage.Utils qualified as Utils
 import Stackage.Data.Response
   ( SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
     StackageResp (snapshot),
   )
 import Stackage.Runner (withStackageParser)
+import Stackage.Utils qualified as Utils
 import System.Environment (withArgs)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty (TestTree)

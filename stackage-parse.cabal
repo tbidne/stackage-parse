@@ -38,6 +38,7 @@ common common-lang
     OverloadedStrings
     PatternSynonyms
     ScopedTypeVariables
+    StrictData
     TypeApplications
     TypeOperators
 
@@ -45,13 +46,13 @@ library
   import:           common-lang
   exposed-modules:
     Stackage
-    Stackage.Utils
     Stackage.API
     Stackage.Args
     Stackage.Data.Request
     Stackage.Data.Request.Internal
     Stackage.Data.Response
     Stackage.Runner
+    Stackage.Utils
 
   build-depends:
     , base                  >=4.16.0.0 && <4.20

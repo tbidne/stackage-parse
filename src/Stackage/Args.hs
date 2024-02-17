@@ -76,15 +76,15 @@ parserInfoArgs =
 -- @since 0.1
 data Args = MkArgs
   { -- | @since 0.1
-    ltsSnapshot :: !(Maybe SnapshotReq),
+    ltsSnapshot :: Maybe SnapshotReq,
     -- | @since 0.1
-    nightlySnapshot :: !(Maybe SnapshotReq),
+    nightlySnapshot :: Maybe SnapshotReq,
     -- | @since 0.1
-    excludeFile :: !(Maybe FilePath),
+    excludeFile :: Maybe FilePath,
     -- | @since 0.1
-    includeFile :: !(Maybe FilePath),
+    includeFile :: Maybe FilePath,
     -- | @since 0.1
-    command :: !Command
+    command :: Command
   }
   deriving stock
     ( -- | @since 0.1
@@ -130,7 +130,7 @@ data Command
   = -- | @since 0.1
     Full
   | -- | @since 0.1
-    ListPackages !(Maybe PkgListFormat) !(Maybe Comma)
+    ListPackages (Maybe PkgListFormat) (Maybe Comma)
   | -- | @since 0.1
     GetSnapshot
   deriving stock

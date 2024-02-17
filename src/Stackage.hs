@@ -19,7 +19,7 @@ module Stackage
 
     -- * Exceptions
     StackageException (..),
-    ExceptionReason (..)
+    ExceptionReason (..),
   )
 where
 
@@ -36,7 +36,6 @@ import Network.HTTP.Client (Response)
 import Network.HTTP.Client qualified as HttpClient
 import Network.HTTP.Types.Status (Status)
 import Network.HTTP.Types.Status qualified as Status
-import Stackage.Utils qualified as Utils
 import Stackage.API
   ( withResponse,
   )
@@ -55,6 +54,7 @@ import Stackage.Data.Response
     SnapshotResp (MkSnapshotResp, compiler, created, ghc, name),
     StackageResp (MkStackageResp, packages, snapshot),
   )
+import Stackage.Utils qualified as Utils
 import Text.JSON qualified as JSON
 
 -- | Returns the 'StackageResp' for the latest nightly snapshot.
@@ -130,8 +130,8 @@ data ExceptionReason
 --
 -- @since 0.1
 data StackageException = MkStackageException
-  { snapshotIdReq :: !SnapshotIdReq,
-    reason :: !ExceptionReason
+  { snapshotIdReq :: SnapshotIdReq,
+    reason :: ExceptionReason
   }
   deriving stock
     ( -- | @since 0.1

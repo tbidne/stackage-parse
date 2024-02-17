@@ -17,12 +17,12 @@ data SnapshotReq
     -- corresponds to the latest LTS.
     --
     -- @since 0.1
-    UnsafeSnapshotReqLts !(Maybe Text)
+    UnsafeSnapshotReqLts (Maybe Text)
   | -- | Nightly snapshots e.g. @SnapshotReqNightly (Just "2023-03-14")@.
     -- 'Nothing' corresponds to the latest nightly.
     --
     -- @since 0.1
-    UnsafeSnapshotReqNightly !(Maybe Text)
+    UnsafeSnapshotReqNightly (Maybe Text)
   deriving stock
     ( -- | @since 0.1
       Eq,

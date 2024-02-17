@@ -10,16 +10,20 @@ module Stackage.Utils
   )
 where
 
-import Data.Bifunctor (first)
+import Control.Exception
+  ( Exception (fromException, toException),
+    SomeAsyncException (SomeAsyncException),
+    SomeException,
+    throwIO,
+  )
 import Control.Exception qualified as Ex
-import Control.Exception (Exception (fromException, toException),
-  throwIO, SomeException, SomeAsyncException (SomeAsyncException))
-import Text.JSON (Result (Error, Ok), JSObject, JSValue (JSObject))
+import Data.Bifunctor (first)
+import Text.JSON (JSObject, JSValue (JSObject), Result (Error, Ok))
 
 mapThrowLeft :: (Exception e2) => (e1 -> e2) -> Either e1 a -> IO a
 mapThrowLeft f = throwLeft . first f
 
-throwLeft :: Exception e => Either e a -> IO a
+throwLeft :: (Exception e) => Either e a -> IO a
 throwLeft (Right x) = pure x
 throwLeft (Left e) = throwIO e
 
