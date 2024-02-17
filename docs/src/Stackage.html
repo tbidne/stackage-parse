@@ -1,0 +1,381 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * REST queries</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Stackage.html#getLatestLts"><span class="hs-identifier">getLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Stackage.html#getLatestNightly"><span class="hs-identifier">getLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.html#getStackage"><span class="hs-identifier">getStackage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><span class="hs-comment">-- * REST request</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier">mkSnapshotReqLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier">mkSnapshotReqLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier">mkSnapshotReqNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-comment">-- * REST response</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier">SnapshotResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Exceptions</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier">StackageException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Stackage.html#ExceptionReason"><span class="hs-identifier">ExceptionReason</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">displayException</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><span class="hs-identifier">SomeException</span></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><span class="hs-identifier">throwIO</span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Encoding</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TEnc</span></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Encoding.Error</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">UnicodeException</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.html"><span class="hs-identifier">Network.HTTP.Client</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Types.html#Response"><span class="hs-identifier">Response</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.html"><span class="hs-identifier">Network.HTTP.Client</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">HttpClient</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html"><span class="hs-identifier">Network.HTTP.Types.Status</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html#Status"><span class="hs-identifier">Status</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html"><span class="hs-identifier">Network.HTTP.Types.Status</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Status</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.API.html"><span class="hs-identifier">Stackage.API</span></a></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.API.html#withResponse"><span class="hs-identifier">withResponse</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Data.Request.html"><span class="hs-identifier">Stackage.Data.Request</span></a></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier">SnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotIdReq"><span class="hs-identifier">mkSnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier">mkSnapshotReqLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier">mkSnapshotReqLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier">mkSnapshotReqNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#unSnapshotIdReq"><span class="hs-identifier">unSnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html"><span class="hs-identifier">Stackage.Data.Response</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Data.Response.html#MkPackageResp"><span class="hs-identifier">MkPackageResp</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aname%3AMkPackageResp"><span class="hs-identifier">name</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aorigin%3AMkPackageResp"><span class="hs-identifier">origin</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Asynopsis%3AMkPackageResp"><span class="hs-identifier">synopsis</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aversion%3AMkPackageResp"><span class="hs-identifier">version</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#SnapshotResp"><span class="hs-identifier">SnapshotResp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Data.Response.html#MkSnapshotResp"><span class="hs-identifier">MkSnapshotResp</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Acompiler%3AMkSnapshotResp"><span class="hs-identifier">compiler</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Acreated%3AMkSnapshotResp"><span class="hs-identifier">created</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aghc%3AMkSnapshotResp"><span class="hs-identifier">ghc</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aname%3AMkSnapshotResp"><span class="hs-identifier">name</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Data.Response.html#MkStackageResp"><span class="hs-identifier">MkStackageResp</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Apackages%3AMkStackageResp"><span class="hs-identifier">packages</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Asnapshot%3AMkStackageResp"><span class="hs-identifier">snapshot</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Utils.html"><span class="hs-identifier">Stackage.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Utils</span></span><span>
+</span><span id="line-58"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html"><span class="hs-identifier">Text.JSON</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">JSON</span></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Returns the 'StackageResp' for the latest nightly snapshot.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Stackage.html#getLatestNightly"><span class="hs-identifier hs-type">getLatestNightly</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-68"></span><span id="getLatestNightly"><span class="annot"><span class="annottext">getLatestNightly :: IO StackageResp
+</span><a href="Stackage.html#getLatestNightly"><span class="hs-identifier hs-var hs-var">getLatestNightly</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var">getStackage</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier hs-var">mkSnapshotReqLatestNightly</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- | Returns the 'StackageResp' for the latest LTS snapshot.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Stackage.html#getLatestLts"><span class="hs-identifier hs-type">getLatestLts</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-78"></span><span id="getLatestLts"><span class="annot"><span class="annottext">getLatestLts :: IO StackageResp
+</span><a href="Stackage.html#getLatestLts"><span class="hs-identifier hs-var hs-var">getLatestLts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var">getStackage</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier hs-var">mkSnapshotReqLatestLts</span></a></span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- | Returns the 'StackageResp' corresponding to the given snapshot.</span><span>
+</span><span id="line-81"></span><span class="hs-comment">--</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-83"></span><span class="hs-comment">--</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--   * 'StackageException'</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Stackage.html#getStackage"><span class="hs-identifier hs-type">getStackage</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier hs-type">StackageResp</span></a></span><span>
+</span><span id="line-88"></span><span id="getStackage"><span class="annot"><span class="annottext">getStackage :: SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var hs-var">getStackage</span></a></span></span><span> </span><span id="local-6989586621679089835"><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089835"><span class="hs-identifier hs-var">snapshot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+-&gt; (Response BodyReader -&gt; IO StackageResp) -&gt; IO StackageResp
+forall a. SnapshotIdReq -&gt; (Response BodyReader -&gt; IO a) -&gt; IO a
+</span><a href="Stackage.API.html#withResponse"><span class="hs-identifier hs-var">withResponse</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679089836"><span class="hs-identifier hs-var">snapshotId</span></a></span><span> </span><span class="annot"><span class="annottext">((Response BodyReader -&gt; IO StackageResp) -&gt; IO StackageResp)
+-&gt; (Response BodyReader -&gt; IO StackageResp) -&gt; IO StackageResp
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679089837"><span class="annot"><span class="annottext">Response BodyReader
+</span><a href="#local-6989586621679089837"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679089838"><span class="annot"><span class="annottext">bodyReader :: BodyReader
+</span><a href="#local-6989586621679089838"><span class="hs-identifier hs-var hs-var">bodyReader</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Response BodyReader -&gt; BodyReader
+forall body. Response body -&gt; body
+</span><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Types.html#responseBody"><span class="hs-identifier hs-var">HttpClient.responseBody</span></a></span><span> </span><span class="annot"><span class="annottext">Response BodyReader
+</span><a href="#local-6989586621679089837"><span class="hs-identifier hs-var">res</span></a></span><span>
+</span><span id="line-90"></span><span>      </span><span id="local-6989586621679089840"><span class="annot"><span class="annottext">status :: Status
+</span><a href="#local-6989586621679089840"><span class="hs-identifier hs-var hs-var">status</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Response BodyReader -&gt; Status
+forall body. Response body -&gt; Status
+</span><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Types.html#responseStatus"><span class="hs-identifier hs-var">HttpClient.responseStatus</span></a></span><span> </span><span class="annot"><span class="annottext">Response BodyReader
+</span><a href="#local-6989586621679089837"><span class="hs-identifier hs-var">res</span></a></span><span>
+</span><span id="line-91"></span><span>      </span><span id="local-6989586621679089842"><span class="annot"><span class="annottext">statusCode :: Int
+</span><a href="#local-6989586621679089842"><span class="hs-identifier hs-var hs-var">statusCode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Response BodyReader -&gt; Int
+forall body. Response body -&gt; Int
+</span><a href="Stackage.html#getStatusCode"><span class="hs-identifier hs-var">getStatusCode</span></a></span><span> </span><span class="annot"><span class="annottext">Response BodyReader
+</span><a href="#local-6989586621679089837"><span class="hs-identifier hs-var">res</span></a></span><span>
+</span><span id="line-92"></span><span>      </span><span id="local-6989586621679089844"><span class="annot"><span class="annottext">mkEx :: ExceptionReason -&gt; StackageException
+</span><a href="#local-6989586621679089844"><span class="hs-identifier hs-var hs-var">mkEx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; ExceptionReason -&gt; StackageException
+</span><a href="Stackage.html#MkStackageException"><span class="hs-identifier hs-var">MkStackageException</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotIdReq
+</span><a href="#local-6989586621679089836"><span class="hs-identifier hs-var">snapshotId</span></a></span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679089842"><span class="hs-identifier hs-var">statusCode</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">200</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><span class="annottext">StackageException -&gt; IO ()
+forall e a. Exception e =&gt; e -&gt; IO a
+</span><span class="hs-identifier hs-var">throwIO</span></span><span> </span><span class="annot"><span class="annottext">(StackageException -&gt; IO ()) -&gt; StackageException -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-96"></span><span>      </span><span class="annot"><span class="annottext">ExceptionReason -&gt; StackageException
+</span><a href="#local-6989586621679089844"><span class="hs-identifier hs-var">mkEx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Status -&gt; ExceptionReason
+</span><a href="Stackage.html#ReasonStatus"><span class="hs-identifier hs-var">ReasonStatus</span></a></span><span> </span><span class="annot"><span class="annottext">Status
+</span><a href="#local-6989586621679089840"><span class="hs-identifier hs-var">status</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span>  </span><span id="local-6989586621679089848"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679089848"><span class="hs-identifier hs-var">bodyBs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><span class="annottext">(SomeException -&gt; StackageException)
+-&gt; Either SomeException ByteString -&gt; BodyReader
+forall e2 e1 a. Exception e2 =&gt; (e1 -&gt; e2) -&gt; Either e1 a -&gt; IO a
+</span><a href="Stackage.Utils.html#mapThrowLeft"><span class="hs-identifier hs-var">Utils.mapThrowLeft</span></a></span><span>
+</span><span id="line-100"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExceptionReason -&gt; StackageException
+</span><a href="#local-6989586621679089844"><span class="hs-identifier hs-var">mkEx</span></a></span><span> </span><span class="annot"><span class="annottext">(ExceptionReason -&gt; StackageException)
+-&gt; (SomeException -&gt; ExceptionReason)
+-&gt; SomeException
+-&gt; StackageException
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; ExceptionReason
+</span><a href="Stackage.html#ReasonReadBody"><span class="hs-identifier hs-var">ReasonReadBody</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>      </span><span class="annot"><span class="annottext">(Either SomeException ByteString -&gt; BodyReader)
+-&gt; IO (Either SomeException ByteString) -&gt; BodyReader
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; m a -&gt; m b
+</span><span class="hs-operator hs-var">=&lt;&lt;</span></span><span> </span><span class="annot"><span class="annottext">BodyReader -&gt; IO (Either SomeException ByteString)
+forall a. IO a -&gt; IO (Either SomeException a)
+</span><a href="Stackage.Utils.html#tryAny"><span class="hs-identifier hs-var">Utils.tryAny</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ByteString] -&gt; ByteString
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span> </span><span class="annot"><span class="annottext">([ByteString] -&gt; ByteString) -&gt; IO [ByteString] -&gt; BodyReader
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">BodyReader -&gt; IO [ByteString]
+</span><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Body.html#brConsume"><span class="hs-identifier hs-var">HttpClient.brConsume</span></a></span><span> </span><span class="annot"><span class="annottext">BodyReader
+</span><a href="#local-6989586621679089838"><span class="hs-identifier hs-var">bodyReader</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>
+</span><span id="line-103"></span><span>  </span><span id="local-6989586621679089856"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089856"><span class="hs-identifier hs-var">bodyTxt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">(UnicodeException -&gt; StackageException)
+-&gt; Either UnicodeException Text -&gt; IO Text
+forall e2 e1 a. Exception e2 =&gt; (e1 -&gt; e2) -&gt; Either e1 a -&gt; IO a
+</span><a href="Stackage.Utils.html#mapThrowLeft"><span class="hs-identifier hs-var">Utils.mapThrowLeft</span></a></span><span>
+</span><span id="line-105"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExceptionReason -&gt; StackageException
+</span><a href="#local-6989586621679089844"><span class="hs-identifier hs-var">mkEx</span></a></span><span> </span><span class="annot"><span class="annottext">(ExceptionReason -&gt; StackageException)
+-&gt; (UnicodeException -&gt; ExceptionReason)
+-&gt; UnicodeException
+-&gt; StackageException
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">UnicodeException -&gt; ExceptionReason
+</span><a href="Stackage.html#ReasonDecodeUtf8"><span class="hs-identifier hs-var">ReasonDecodeUtf8</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ByteString -&gt; Either UnicodeException Text
+</span><span class="hs-identifier hs-var">TEnc.decodeUtf8'</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679089848"><span class="hs-identifier hs-var">bodyBs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679089859"><span class="annot"><span class="annottext">bodyStr :: String
+</span><a href="#local-6989586621679089859"><span class="hs-identifier hs-var hs-var">bodyStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089856"><span class="hs-identifier hs-var">bodyTxt</span></a></span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; StackageException)
+-&gt; Either String StackageResp -&gt; IO StackageResp
+forall e2 e1 a. Exception e2 =&gt; (e1 -&gt; e2) -&gt; Either e1 a -&gt; IO a
+</span><a href="Stackage.Utils.html#mapThrowLeft"><span class="hs-identifier hs-var">Utils.mapThrowLeft</span></a></span><span>
+</span><span id="line-111"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExceptionReason -&gt; StackageException
+</span><a href="#local-6989586621679089844"><span class="hs-identifier hs-var">mkEx</span></a></span><span> </span><span class="annot"><span class="annottext">(ExceptionReason -&gt; StackageException)
+-&gt; (String -&gt; ExceptionReason) -&gt; String -&gt; StackageException
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; ExceptionReason
+</span><a href="Stackage.html#ReasonDecodeJson"><span class="hs-identifier hs-var">ReasonDecodeJson</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089859"><span class="hs-identifier hs-var">bodyStr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Result StackageResp -&gt; Either String StackageResp
+forall a. Result a -&gt; Either String a
+</span><a href="Stackage.Utils.html#jsonResultToEither"><span class="hs-identifier hs-var">Utils.jsonResultToEither</span></a></span><span> </span><span class="annot"><span class="annottext">(Result StackageResp -&gt; Either String StackageResp)
+-&gt; (String -&gt; Result StackageResp)
+-&gt; String
+-&gt; Either String StackageResp
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Result StackageResp
+forall a. JSON a =&gt; String -&gt; Result a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html#decode"><span class="hs-identifier hs-var">JSON.decode</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Either String StackageResp)
+-&gt; String -&gt; Either String StackageResp
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089859"><span class="hs-identifier hs-var">bodyStr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-113"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-114"></span><span>    </span><span id="local-6989586621679089836"><span class="annot"><span class="annottext">snapshotId :: SnapshotIdReq
+</span><a href="#local-6989586621679089836"><span class="hs-identifier hs-var hs-var">snapshotId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; SnapshotIdReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotIdReq"><span class="hs-identifier hs-var">mkSnapshotIdReq</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089835"><span class="hs-identifier hs-var">snapshot</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span id="local-6989586621679089749"><span class="annot"><a href="Stackage.html#getStatusCode"><span class="hs-identifier hs-type">getStatusCode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Types.html#Response"><span class="hs-identifier hs-type">Response</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679089749"><span class="hs-identifier hs-type">body</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span></span><span>
+</span><span id="line-117"></span><span id="getStatusCode"><span class="annot"><span class="annottext">getStatusCode :: forall body. Response body -&gt; Int
+</span><a href="Stackage.html#getStatusCode"><span class="hs-identifier hs-var hs-var">getStatusCode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Status -&gt; Int
+</span><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html#statusCode"><span class="hs-identifier hs-var">Status.statusCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Status -&gt; Int)
+-&gt; (Response body -&gt; Status) -&gt; Response body -&gt; Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Response body -&gt; Status
+forall body. Response body -&gt; Status
+</span><a href="file:///nix/store/b508k23zxcwhpjj8rlq7bz07ps50f7jq-http-client-0.7.15-doc/share/doc/http-client-0.7.15/html/src/Network.HTTP.Client.Types.html#responseStatus"><span class="hs-identifier hs-var">HttpClient.responseStatus</span></a></span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span class="hs-keyword">data</span><span> </span><span id="ExceptionReason"><span class="annot"><a href="Stackage.html#ExceptionReason"><span class="hs-identifier hs-var">ExceptionReason</span></a></span></span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="ReasonStatus"><span class="annot"><a href="Stackage.html#ReasonStatus"><span class="hs-identifier hs-var">ReasonStatus</span></a></span></span><span> </span><span class="annot"><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html#Status"><span class="hs-identifier hs-type">Status</span></a></span><span>
+</span><span id="line-121"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ReasonReadBody"><span class="annot"><a href="Stackage.html#ReasonReadBody"><span class="hs-identifier hs-var">ReasonReadBody</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">SomeException</span></span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ReasonDecodeUtf8"><span class="annot"><a href="Stackage.html#ReasonDecodeUtf8"><span class="hs-identifier hs-var">ReasonDecodeUtf8</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">UnicodeException</span></span><span>
+</span><span id="line-123"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ReasonDecodeJson"><span class="annot"><a href="Stackage.html#ReasonDecodeJson"><span class="hs-identifier hs-var">ReasonDecodeJson</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-124"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-126"></span><span>      </span><span id="local-6989586621679089866"><span id="local-6989586621679089883"><span id="local-6989586621679089887"><span class="annot"><span class="annottext">Int -&gt; ExceptionReason -&gt; ShowS
+[ExceptionReason] -&gt; ShowS
+ExceptionReason -&gt; String
+(Int -&gt; ExceptionReason -&gt; ShowS)
+-&gt; (ExceptionReason -&gt; String)
+-&gt; ([ExceptionReason] -&gt; ShowS)
+-&gt; Show ExceptionReason
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ExceptionReason -&gt; ShowS
+showsPrec :: Int -&gt; ExceptionReason -&gt; ShowS
+$cshow :: ExceptionReason -&gt; String
+show :: ExceptionReason -&gt; String
+$cshowList :: [ExceptionReason] -&gt; ShowS
+showList :: [ExceptionReason] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-127"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- | General network exception.</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--</span><span>
+</span><span id="line-131"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-132"></span><span class="hs-keyword">data</span><span> </span><span id="StackageException"><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier hs-var">StackageException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkStackageException"><span class="annot"><a href="Stackage.html#MkStackageException"><span class="hs-identifier hs-var">MkStackageException</span></a></span></span><span>
+</span><span id="line-133"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="%24sel%3AsnapshotIdReq%3AMkStackageException"><span class="annot"><span class="annottext">StackageException -&gt; SnapshotIdReq
+</span><a href="Stackage.html#%24sel%3AsnapshotIdReq%3AMkStackageException"><span class="hs-identifier hs-var hs-var">snapshotIdReq</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier hs-type">SnapshotIdReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>    </span><span id="%24sel%3Areason%3AMkStackageException"><span class="annot"><span class="annottext">StackageException -&gt; ExceptionReason
+</span><a href="Stackage.html#%24sel%3Areason%3AMkStackageException"><span class="hs-identifier hs-var hs-var">reason</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Stackage.html#ExceptionReason"><span class="hs-identifier hs-type">ExceptionReason</span></a></span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-138"></span><span>      </span><span id="local-6989586621679089894"><span id="local-6989586621679089900"><span id="local-6989586621679089904"><span class="annot"><span class="annottext">Int -&gt; StackageException -&gt; ShowS
+[StackageException] -&gt; ShowS
+StackageException -&gt; String
+(Int -&gt; StackageException -&gt; ShowS)
+-&gt; (StackageException -&gt; String)
+-&gt; ([StackageException] -&gt; ShowS)
+-&gt; Show StackageException
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; StackageException -&gt; ShowS
+showsPrec :: Int -&gt; StackageException -&gt; ShowS
+$cshow :: StackageException -&gt; String
+show :: StackageException -&gt; String
+$cshowList :: [StackageException] -&gt; ShowS
+showList :: [StackageException] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-139"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679089911"><span id="local-6989586621679089914"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Stackage.html#StackageException"><span class="hs-identifier hs-type">StackageException</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-142"></span><span>  </span><span id="local-6989586621679089940"><span class="annot"><span class="annottext">displayException :: StackageException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></span></span><span> </span><span id="local-6989586621679089941"><span class="annot"><span class="annottext">StackageException
+</span><a href="#local-6989586621679089941"><span class="hs-identifier hs-var">ex</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-143"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">StackageException
+</span><a href="#local-6989586621679089941"><span class="hs-identifier hs-var">ex</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">reason</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-144"></span><span>      </span><span class="annot"><a href="Stackage.html#ReasonStatus"><span class="hs-identifier hs-type">ReasonStatus</span></a></span><span> </span><span id="local-6989586621679089942"><span class="annot"><span class="annottext">Status
+</span><a href="#local-6989586621679089942"><span class="hs-identifier hs-var">status</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-145"></span><span>        </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Status -&gt; Bool
+</span><a href="#local-6989586621679089943"><span class="hs-identifier hs-var">is404</span></a></span><span> </span><span class="annot"><span class="annottext">Status
+</span><a href="#local-6989586621679089942"><span class="hs-identifier hs-var">status</span></a></span><span>
+</span><span id="line-146"></span><span>          </span><span class="hs-keyword">then</span><span>
+</span><span id="line-147"></span><span>            </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-148"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Received 404 for snapshot: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-149"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089944"><span class="hs-identifier hs-var">snapshotIdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-150"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;. Is the snapshot correct?&quot;</span></span><span>
+</span><span id="line-151"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-152"></span><span>          </span><span class="hs-keyword">else</span><span>
+</span><span id="line-153"></span><span>            </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-154"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Received exception for snapshot: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-155"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089944"><span class="hs-identifier hs-var">snapshotIdTxt</span></a></span><span>
+</span><span id="line-156"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-157"></span><span>      </span><span class="annot"><a href="Stackage.html#ReasonReadBody"><span class="hs-identifier hs-type">ReasonReadBody</span></a></span><span> </span><span id="local-6989586621679089945"><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679089945"><span class="hs-identifier hs-var">readBodyEx</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-158"></span><span>        </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-159"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Exception when trying to read body for snapshot '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-160"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089944"><span class="hs-identifier hs-var">snapshotIdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-161"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;':\n\n&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-162"></span><span>            </span><span class="annot"><span class="annottext">SomeException -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679089945"><span class="hs-identifier hs-var">readBodyEx</span></a></span><span>
+</span><span id="line-163"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-164"></span><span>      </span><span class="annot"><a href="Stackage.html#ReasonDecodeUtf8"><span class="hs-identifier hs-type">ReasonDecodeUtf8</span></a></span><span> </span><span id="local-6989586621679089946"><span class="annot"><span class="annottext">UnicodeException
+</span><a href="#local-6989586621679089946"><span class="hs-identifier hs-var">decodeUtf8Ex</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-165"></span><span>        </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-166"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Exception decoding body to UTF-8 for snapshot '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-167"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089944"><span class="hs-identifier hs-var">snapshotIdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-168"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;':\n\n&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-169"></span><span>            </span><span class="annot"><span class="annottext">UnicodeException -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">UnicodeException
+</span><a href="#local-6989586621679089946"><span class="hs-identifier hs-var">decodeUtf8Ex</span></a></span><span>
+</span><span id="line-170"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-171"></span><span>      </span><span class="annot"><a href="Stackage.html#ReasonDecodeJson"><span class="hs-identifier hs-type">ReasonDecodeJson</span></a></span><span> </span><span id="local-6989586621679089947"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089947"><span class="hs-identifier hs-var">jsonStr</span></a></span></span><span> </span><span id="local-6989586621679089948"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089948"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-172"></span><span>        </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-173"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not decode JSON:\n\n&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-174"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089947"><span class="hs-identifier hs-var">jsonStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-175"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n\nError: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-176"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679089948"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-177"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-178"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-179"></span><span>      </span><span id="local-6989586621679089944"><span class="annot"><span class="annottext">snapshotIdTxt :: String
+</span><a href="#local-6989586621679089944"><span class="hs-identifier hs-var hs-var">snapshotIdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SnapshotIdReq -&gt; Text
+</span><a href="Stackage.Data.Request.html#unSnapshotIdReq"><span class="hs-identifier hs-var">unSnapshotIdReq</span></a></span><span> </span><span class="annot"><span class="annottext">StackageException
+</span><a href="#local-6989586621679089941"><span class="hs-identifier hs-var">ex</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">snapshotIdReq</span><span class="hs-special">)</span><span>
+</span><span id="line-180"></span><span>      </span><span id="local-6989586621679089943"><span class="annot"><span class="annottext">is404 :: Status -&gt; Bool
+</span><a href="#local-6989586621679089943"><span class="hs-identifier hs-var hs-var">is404</span></a></span></span><span> </span><span id="local-6989586621679089952"><span class="annot"><span class="annottext">Status
+</span><a href="#local-6989586621679089952"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Status -&gt; Int
+</span><a href="file:///nix/store/q8ivrw5g9xgcrkb4jhy2752k22cnkzac-http-types-0.12.3-doc/share/doc/http-types-0.12.3/html/src/Network.HTTP.Types.Status.html#statusCode"><span class="hs-identifier hs-var">Status.statusCode</span></a></span><span> </span><span class="annot"><span class="annottext">Status
+</span><a href="#local-6989586621679089952"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">404</span></span><span>
+</span><span id="line-181"></span></pre></body></html>

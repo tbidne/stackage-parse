@@ -1,0 +1,404 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Runs stackage-parse with CLI args.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage.Runner</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Runner.html#runStackageParser"><span class="hs-identifier">runStackageParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.Runner.html#withStackageParser"><span class="hs-identifier">withStackageParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(&lt;|&gt;)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">throwIO</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BS</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">for_</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier">HashSet</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromMaybe</span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Encoding</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TEnc</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.html"><span class="hs-identifier">Stackage</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#PackageResp"><span class="hs-identifier">PackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aname%3AMkPackageResp"><span class="hs-identifier">name</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Aversion%3AMkPackageResp"><span class="hs-identifier">version</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Stackage.Data.Response.html#StackageResp"><span class="hs-identifier">StackageResp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Apackages%3AMkStackageResp"><span class="hs-identifier">packages</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Asnapshot%3AMkStackageResp"><span class="hs-identifier">snapshot</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Stackage.html#getStackage"><span class="hs-identifier">getStackage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Args.html"><span class="hs-identifier">Stackage.Args</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier">Args</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Args.html#%24sel%3Acommand%3AMkArgs"><span class="hs-identifier">command</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#%24sel%3AexcludeFile%3AMkArgs"><span class="hs-identifier">excludeFile</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#%24sel%3AincludeFile%3AMkArgs"><span class="hs-identifier">includeFile</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#%24sel%3AltsSnapshot%3AMkArgs"><span class="hs-identifier">ltsSnapshot</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#%24sel%3AnightlySnapshot%3AMkArgs"><span class="hs-identifier">nightlySnapshot</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#Comma"><span class="hs-identifier">Comma</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Args.html#CommaAppend"><span class="hs-identifier">CommaAppend</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#CommaPrepend"><span class="hs-identifier">CommaPrepend</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Args.html#Full"><span class="hs-identifier">Full</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#GetSnapshot"><span class="hs-identifier">GetSnapshot</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#ListPackages"><span class="hs-identifier">ListPackages</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#PkgListFormat"><span class="hs-identifier">PkgListFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Stackage.Args.html#PkgListCabal"><span class="hs-identifier">PkgListCabal</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Args.html#PkgListShort"><span class="hs-identifier">PkgListShort</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#getArgs"><span class="hs-identifier">getArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html"><span class="hs-identifier">Text.JSON</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html#JSON"><span class="hs-identifier">JSON</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html"><span class="hs-identifier">Text.JSON</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">JSON</span></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- | Parses CLI 'Args' and queries stackage. Results are printed.</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-40"></span><span class="annot"><a href="Stackage.Runner.html#runStackageParser"><span class="hs-identifier hs-type">runStackageParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span id="runStackageParser"><span class="annot"><span class="annottext">runStackageParser :: IO ()
+</span><a href="Stackage.Runner.html#runStackageParser"><span class="hs-identifier hs-var hs-var">runStackageParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; IO ()) -&gt; IO ()
+</span><a href="Stackage.Runner.html#withStackageParser"><span class="hs-identifier hs-var">withStackageParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(FilePath -&gt; IO ()) -&gt; (Text -&gt; FilePath) -&gt; Text -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; FilePath
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | Parses CLI 'Args' and queries stackage. Results are handled via the</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- argument fn.</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-47"></span><span class="annot"><a href="Stackage.Runner.html#withStackageParser"><span class="hs-identifier hs-type">withStackageParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span id="withStackageParser"><span class="annot"><span class="annottext">withStackageParser :: (Text -&gt; IO ()) -&gt; IO ()
+</span><a href="Stackage.Runner.html#withStackageParser"><span class="hs-identifier hs-var hs-var">withStackageParser</span></a></span></span><span> </span><span id="local-6989586621679090091"><span class="annot"><span class="annottext">Text -&gt; IO ()
+</span><a href="#local-6989586621679090091"><span class="hs-identifier hs-var">onStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-49"></span><span>  </span><span id="local-6989586621679090092"><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Args
+</span><a href="Stackage.Args.html#getArgs"><span class="hs-identifier hs-var">getArgs</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-comment">-- default to latest nightly</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679090097"><span class="annot"><span class="annottext">snapshot :: SnapshotReq
+</span><a href="#local-6989586621679090097"><span class="hs-identifier hs-var hs-var">snapshot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-53"></span><span>        </span><span class="annot"><span class="annottext">SnapshotReq -&gt; Maybe SnapshotReq -&gt; SnapshotReq
+forall a. a -&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromMaybe</span></span><span>
+</span><span id="line-54"></span><span>          </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier hs-var">mkSnapshotReqLatestNightly</span></a></span><span>
+</span><span id="line-55"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">nightlySnapshot</span><span> </span><span class="annot"><span class="annottext">Maybe SnapshotReq -&gt; Maybe SnapshotReq -&gt; Maybe SnapshotReq
+forall a. Maybe a -&gt; Maybe a -&gt; Maybe a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">ltsSnapshot</span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span>  </span><span id="local-6989586621679090098"><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090098"><span class="hs-identifier hs-var">filterFn</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">includeFile</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">excludeFile</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679090099"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090099"><span class="hs-identifier hs-var">f</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679090100"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090100"><span class="hs-identifier hs-var">g</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-59"></span><span>      </span><span id="local-6989586621679090101"><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090101"><span class="hs-identifier hs-var">f'</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getIncludeFn"><span class="hs-identifier hs-var">getIncludeFn</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090099"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-60"></span><span>      </span><span id="local-6989586621679090103"><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090103"><span class="hs-identifier hs-var">g'</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getExcludeFn"><span class="hs-identifier hs-var">getExcludeFn</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090100"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; IO (Text -&gt; Bool)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">((Text -&gt; Bool) -&gt; IO (Text -&gt; Bool))
+-&gt; (Text -&gt; Bool) -&gt; IO (Text -&gt; Bool)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679090105"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090105"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090101"><span class="hs-identifier hs-var">f'</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090105"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090103"><span class="hs-identifier hs-var">g'</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090105"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679090107"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090107"><span class="hs-identifier hs-var">f</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getIncludeFn"><span class="hs-identifier hs-var">getIncludeFn</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090107"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe FilePath
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679090108"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090108"><span class="hs-identifier hs-var">g</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getExcludeFn"><span class="hs-identifier hs-var">getExcludeFn</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090108"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe FilePath
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; IO (Text -&gt; Bool)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Bool
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span>  </span><span id="local-6989586621679090110"><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679090110"><span class="hs-identifier hs-var">resp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; IO StackageResp
+</span><a href="Stackage.html#getStackage"><span class="hs-identifier hs-var">getStackage</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679090097"><span class="hs-identifier hs-var">snapshot</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679090092"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">command</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">Command
+</span><a href="Stackage.Args.html#Full"><span class="hs-identifier hs-var">Full</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; IO ()
+</span><a href="#local-6989586621679090091"><span class="hs-identifier hs-var">onStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; IO ()) -&gt; Text -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-69"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679090113"><span class="annot"><span class="annottext">packages :: [PackageResp]
+</span><a href="#local-6989586621679090113"><span class="hs-identifier hs-var hs-var">packages</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PackageResp -&gt; Bool) -&gt; [PackageResp] -&gt; [PackageResp]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090098"><span class="hs-identifier hs-var">filterFn</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; (PackageResp -&gt; Text) -&gt; PackageResp -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="hs-operator">.</span><span class="hs-identifier">name</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679090110"><span class="hs-identifier hs-var">resp</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">packages</span><span>
+</span><span id="line-70"></span><span>      </span><span class="annot"><span class="annottext">StackageResp -&gt; Text
+forall a. JSON a =&gt; a -&gt; Text
+</span><a href="Stackage.Runner.html#toJson"><span class="hs-identifier hs-var">toJson</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679090110"><span class="hs-identifier hs-var">resp</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><a href="Stackage.Data.Response.html#%24sel%3Apackages%3AMkStackageResp"><span class="hs-identifier hs-var hs-type">packages</span></a></span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">Command
+</span><a href="Stackage.Args.html#GetSnapshot"><span class="hs-identifier hs-var">GetSnapshot</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; IO ()
+</span><a href="#local-6989586621679090091"><span class="hs-identifier hs-var">onStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; IO ()) -&gt; Text -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">SnapshotResp -&gt; Text
+forall a. JSON a =&gt; a -&gt; Text
+</span><a href="Stackage.Runner.html#toJson"><span class="hs-identifier hs-var">toJson</span></a></span><span> </span><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679090110"><span class="hs-identifier hs-var">resp</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">snapshot</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#ListPackages"><span class="hs-identifier hs-type">ListPackages</span></a></span><span> </span><span id="local-6989586621679090115"><span class="annot"><span class="annottext">Maybe PkgListFormat
+</span><a href="#local-6989586621679090115"><span class="hs-identifier hs-var">fmt</span></a></span></span><span> </span><span id="local-6989586621679090116"><span class="annot"><span class="annottext">Maybe Comma
+</span><a href="#local-6989586621679090116"><span class="hs-identifier hs-var">comma</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-73"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679090131"><span class="annot"><span class="annottext">fmtFn :: PackageResp -&gt; Text
+</span><a href="#local-6989586621679090131"><span class="hs-identifier hs-var hs-var">fmtFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe PkgListFormat
+</span><a href="#local-6989586621679090115"><span class="hs-identifier hs-var">fmt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-74"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">PkgListFormat
+</span><a href="Stackage.Args.html#PkgListShort"><span class="hs-identifier hs-var">PkgListShort</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PackageResp -&gt; Text
+forall {a} {r}.
+(Semigroup a, IsString a, HasField &quot;version&quot; r a,
+ HasField &quot;name&quot; r a) =&gt;
+r -&gt; a
+</span><a href="#local-6989586621679090132"><span class="hs-identifier hs-var">fmtShort</span></a></span><span>
+</span><span id="line-75"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">PkgListFormat
+</span><a href="Stackage.Args.html#PkgListCabal"><span class="hs-identifier hs-var">PkgListCabal</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PackageResp -&gt; Text
+forall {a} {r}.
+(Semigroup a, IsString a, HasField &quot;version&quot; r a,
+ HasField &quot;name&quot; r a) =&gt;
+r -&gt; a
+</span><a href="#local-6989586621679090133"><span class="hs-identifier hs-var">fmtCabal</span></a></span><span>
+</span><span id="line-76"></span><span>            </span><span class="hs-comment">-- default to fmtShort</span><span>
+</span><span id="line-77"></span><span>            </span><span class="annot"><span class="annottext">Maybe PkgListFormat
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PackageResp -&gt; Text
+forall {a} {r}.
+(Semigroup a, IsString a, HasField &quot;version&quot; r a,
+ HasField &quot;name&quot; r a) =&gt;
+r -&gt; a
+</span><a href="#local-6989586621679090132"><span class="hs-identifier hs-var">fmtShort</span></a></span><span>
+</span><span id="line-78"></span><span>          </span><span id="local-6989586621679090138"><span class="annot"><span class="annottext">commaFn :: Text -&gt; Text
+</span><a href="#local-6989586621679090138"><span class="hs-identifier hs-var hs-var">commaFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Comma
+</span><a href="#local-6989586621679090116"><span class="hs-identifier hs-var">comma</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-79"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">Comma
+</span><a href="Stackage.Args.html#CommaAppend"><span class="hs-identifier hs-var">CommaAppend</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+forall {a}. (Semigroup a, IsString a) =&gt; a -&gt; a
+</span><a href="#local-6989586621679090139"><span class="hs-identifier hs-var">commaAppend</span></a></span><span>
+</span><span id="line-80"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">Comma
+</span><a href="Stackage.Args.html#CommaPrepend"><span class="hs-identifier hs-var">CommaPrepend</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+forall {a}. (Semigroup a, IsString a) =&gt; a -&gt; a
+</span><a href="#local-6989586621679090140"><span class="hs-identifier hs-var">commaPrepend</span></a></span><span>
+</span><span id="line-81"></span><span>            </span><span class="annot"><span class="annottext">Maybe Comma
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-82"></span><span>      </span><span class="annot"><span class="annottext">[PackageResp] -&gt; (PackageResp -&gt; IO ()) -&gt; IO ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="annot"><span class="annottext">StackageResp
+</span><a href="#local-6989586621679090110"><span class="hs-identifier hs-var">resp</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">packages</span><span> </span><span class="annot"><span class="annottext">((PackageResp -&gt; IO ()) -&gt; IO ())
+-&gt; (PackageResp -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679090142"><span class="annot"><span class="annottext">PackageResp
+</span><a href="#local-6989586621679090142"><span class="hs-identifier hs-var">pkg</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-83"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090098"><span class="hs-identifier hs-var">filterFn</span></a></span><span> </span><span class="annot"><span class="annottext">PackageResp
+</span><a href="#local-6989586621679090142"><span class="hs-identifier hs-var">pkg</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">name</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; IO ()
+</span><a href="#local-6989586621679090091"><span class="hs-identifier hs-var">onStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; IO ()) -&gt; (PackageResp -&gt; Text) -&gt; PackageResp -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679090138"><span class="hs-identifier hs-var">commaFn</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; (PackageResp -&gt; Text) -&gt; PackageResp -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PackageResp -&gt; Text
+</span><a href="#local-6989586621679090131"><span class="hs-identifier hs-var">fmtFn</span></a></span><span> </span><span class="annot"><span class="annottext">(PackageResp -&gt; IO ()) -&gt; PackageResp -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">PackageResp
+</span><a href="#local-6989586621679090142"><span class="hs-identifier hs-var">pkg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-85"></span><span>    </span><span id="local-6989586621679090132"><span class="annot"><span class="annottext">fmtShort :: r -&gt; a
+</span><a href="#local-6989586621679090132"><span class="hs-identifier hs-var hs-var">fmtShort</span></a></span></span><span> </span><span id="local-6989586621679090152"><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090152"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090152"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">name</span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;-&quot;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090152"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">version</span><span>
+</span><span id="line-86"></span><span>    </span><span id="local-6989586621679090133"><span class="annot"><span class="annottext">fmtCabal :: r -&gt; a
+</span><a href="#local-6989586621679090133"><span class="hs-identifier hs-var hs-var">fmtCabal</span></a></span></span><span> </span><span id="local-6989586621679090162"><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090162"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090162"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">name</span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot; ==&quot;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679090162"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">version</span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679090139"><span class="annot"><span class="annottext">commaAppend :: a -&gt; a
+</span><a href="#local-6989586621679090139"><span class="hs-identifier hs-var hs-var">commaAppend</span></a></span></span><span> </span><span id="local-6989586621679090167"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679090167"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679090167"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;,&quot;</span></span><span>
+</span><span id="line-89"></span><span>    </span><span id="local-6989586621679090140"><span class="annot"><span class="annottext">commaPrepend :: a -&gt; a
+</span><a href="#local-6989586621679090140"><span class="hs-identifier hs-var hs-var">commaPrepend</span></a></span></span><span> </span><span id="local-6989586621679090172"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679090172"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;, &quot;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679090172"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Stackage.Runner.html#getExcludeFn"><span class="hs-identifier hs-type">getExcludeFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span id="getExcludeFn"><span class="annot"><span class="annottext">getExcludeFn :: FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getExcludeFn"><span class="hs-identifier hs-var hs-var">getExcludeFn</span></a></span></span><span> </span><span id="local-6989586621679090173"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090173"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679090174"><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679090174"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; (Text -&gt; Bool) -&gt; Text -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; HashSet Text -&gt; Bool
+forall a. (Eq a, Hashable a) =&gt; a -&gt; HashSet a -&gt; Bool
+</span><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.Internal.html#member"><span class="hs-operator hs-var">`Set.member`</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679090174"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(HashSet Text -&gt; Text -&gt; Bool)
+-&gt; IO (HashSet Text) -&gt; IO (Text -&gt; Bool)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (HashSet Text)
+</span><a href="Stackage.Runner.html#parsePackageFileList"><span class="hs-identifier hs-var">parsePackageFileList</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090173"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span class="annot"><a href="Stackage.Runner.html#getIncludeFn"><span class="hs-identifier hs-type">getIncludeFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span id="getIncludeFn"><span class="annot"><span class="annottext">getIncludeFn :: FilePath -&gt; IO (Text -&gt; Bool)
+</span><a href="Stackage.Runner.html#getIncludeFn"><span class="hs-identifier hs-var hs-var">getIncludeFn</span></a></span></span><span> </span><span id="local-6989586621679090179"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090179"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; HashSet Text -&gt; Bool) -&gt; HashSet Text -&gt; Text -&gt; Bool
+forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
+</span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; HashSet Text -&gt; Bool
+forall a. (Eq a, Hashable a) =&gt; a -&gt; HashSet a -&gt; Bool
+</span><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.Internal.html#member"><span class="hs-identifier hs-var">Set.member</span></a></span><span> </span><span class="annot"><span class="annottext">(HashSet Text -&gt; Text -&gt; Bool)
+-&gt; IO (HashSet Text) -&gt; IO (Text -&gt; Bool)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (HashSet Text)
+</span><a href="Stackage.Runner.html#parsePackageFileList"><span class="hs-identifier hs-var">parsePackageFileList</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090179"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Stackage.Runner.html#parsePackageFileList"><span class="hs-identifier hs-type">parsePackageFileList</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier hs-type">HashSet</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span id="parsePackageFileList"><span class="annot"><span class="annottext">parsePackageFileList :: FilePath -&gt; IO (HashSet Text)
+</span><a href="Stackage.Runner.html#parsePackageFileList"><span class="hs-identifier hs-var hs-var">parsePackageFileList</span></a></span></span><span> </span><span id="local-6989586621679090181"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090181"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-99"></span><span>  </span><span id="local-6989586621679090182"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090182"><span class="hs-identifier hs-var">contents</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(UnicodeException -&gt; IO Text)
+-&gt; (Text -&gt; IO Text) -&gt; Either UnicodeException Text -&gt; IO Text
+forall a c b. (a -&gt; c) -&gt; (b -&gt; c) -&gt; Either a b -&gt; c
+</span><span class="hs-identifier hs-var">either</span></span><span> </span><span class="annot"><span class="annottext">UnicodeException -&gt; IO Text
+forall e a. Exception e =&gt; e -&gt; IO a
+</span><span class="hs-identifier hs-var">throwIO</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; IO Text
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either UnicodeException Text -&gt; IO Text)
+-&gt; (ByteString -&gt; Either UnicodeException Text)
+-&gt; ByteString
+-&gt; IO Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Either UnicodeException Text
+</span><span class="hs-identifier hs-var">TEnc.decodeUtf8'</span></span><span> </span><span class="annot"><span class="annottext">(ByteString -&gt; IO Text) -&gt; IO ByteString -&gt; IO Text
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; m a -&gt; m b
+</span><span class="hs-operator hs-var">=&lt;&lt;</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO ByteString
+</span><span class="hs-identifier hs-var">BS.readFile</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679090181"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><span class="annottext">HashSet Text -&gt; IO (HashSet Text)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span>
+</span><span id="line-102"></span><span>    </span><span class="annot"><span class="annottext">(HashSet Text -&gt; IO (HashSet Text))
+-&gt; HashSet Text -&gt; IO (HashSet Text)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; HashSet Text
+forall a. (Eq a, Hashable a) =&gt; [a] -&gt; HashSet a
+</span><a href="file:///nix/store/bwqbqwdfs6lyhsxf2gxh0y4pcn8888mc-unordered-containers-0.2.19.1-doc/share/doc/unordered-containers-0.2.19.1/html/src/Data.HashSet.Internal.html#fromList"><span class="hs-identifier hs-var">Set.fromList</span></a></span><span>
+</span><span id="line-103"></span><span>      </span><span class="annot"><span class="annottext">([Text] -&gt; HashSet Text)
+-&gt; ([Text] -&gt; [Text]) -&gt; [Text] -&gt; HashSet Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; [Text] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679090188"><span class="hs-identifier hs-var">parsePkg</span></a></span><span>
+</span><span id="line-104"></span><span>      </span><span class="annot"><span class="annottext">([Text] -&gt; [Text]) -&gt; ([Text] -&gt; [Text]) -&gt; [Text] -&gt; [Text]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; [Text]
+</span><a href="#local-6989586621679090189"><span class="hs-identifier hs-var">skipLines</span></a></span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><span class="annottext">([Text] -&gt; HashSet Text) -&gt; [Text] -&gt; HashSet Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text]
+</span><span class="hs-identifier hs-var">T.lines</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090182"><span class="hs-identifier hs-var">contents</span></a></span><span>
+</span><span id="line-106"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-107"></span><span>    </span><span id="local-6989586621679090189"><span class="annot"><span class="annottext">skipLines :: [Text] -&gt; [Text]
+</span><a href="#local-6989586621679090189"><span class="hs-identifier hs-var hs-var">skipLines</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; [Text] -&gt; [Text]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679090191"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090191"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090192"><span class="hs-identifier hs-var">nonComment</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090191"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="#local-6989586621679090193"><span class="hs-identifier hs-var">nonEmpty</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090191"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span>
+</span><span id="line-109"></span><span>    </span><span id="local-6989586621679090188"><span class="annot"><span class="annottext">parsePkg :: Text -&gt; Text
+</span><a href="#local-6989586621679090188"><span class="hs-identifier hs-var hs-var">parsePkg</span></a></span></span><span> </span><span id="local-6989586621679090196"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090196"><span class="hs-identifier hs-var">line</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; Text -&gt; [Text]
+</span><span class="hs-identifier hs-var">T.split</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'#'</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090196"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-comment">-- remove everything after the first #</span><span>
+</span><span id="line-111"></span><span>      </span><span class="hs-special">(</span><span id="local-6989586621679090198"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090198"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.strip</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090198"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-112"></span><span>      </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.strip</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679090196"><span class="hs-identifier hs-var">line</span></a></span><span>
+</span><span id="line-113"></span><span>
+</span><span id="line-114"></span><span>    </span><span class="hs-comment">-- Technically this is unnecessary as a &quot;comment line&quot; (e.g. # text ...)</span><span>
+</span><span id="line-115"></span><span>    </span><span class="hs-comment">-- will never match a hackage package name. Still, seems better to</span><span>
+</span><span id="line-116"></span><span>    </span><span class="hs-comment">-- strip them.</span><span>
+</span><span id="line-117"></span><span>    </span><span id="local-6989586621679090192"><span class="annot"><span class="annottext">nonComment :: Text -&gt; Bool
+</span><a href="#local-6989586621679090192"><span class="hs-identifier hs-var hs-var">nonComment</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; (Text -&gt; Bool) -&gt; Text -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+</span><span class="hs-identifier hs-var">T.isPrefixOf</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;#&quot;</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; (Text -&gt; Text) -&gt; Text -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.strip</span></span><span>
+</span><span id="line-118"></span><span>    </span><span id="local-6989586621679090193"><span class="annot"><span class="annottext">nonEmpty :: Text -&gt; Bool
+</span><a href="#local-6989586621679090193"><span class="hs-identifier hs-var hs-var">nonEmpty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; (Text -&gt; Bool) -&gt; Text -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><span class="hs-identifier hs-var">T.null</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Bool) -&gt; (Text -&gt; Text) -&gt; Text -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.strip</span></span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span id="local-6989586621679089980"><span class="annot"><a href="Stackage.Runner.html#toJson"><span class="hs-identifier hs-type">toJson</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html#JSON"><span class="hs-identifier hs-type">JSON</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679089980"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679089980"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span></span><span>
+</span><span id="line-121"></span><span id="toJson"><span class="annot"><span class="annottext">toJson :: forall a. JSON a =&gt; a -&gt; Text
+</span><a href="Stackage.Runner.html#toJson"><span class="hs-identifier hs-var hs-var">toJson</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">(FilePath -&gt; Text) -&gt; (a -&gt; FilePath) -&gt; a -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; FilePath
+forall a. JSON a =&gt; a -&gt; FilePath
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/json-0.11-7ef90429f4e9956a27e4b6236dee24f6669047d45f19d3b972d215bc435b82ea/share/doc/html/src/Text.JSON.html#encode"><span class="hs-identifier hs-var">JSON.encode</span></a></span><span>
+</span><span id="line-122"></span></pre></body></html>

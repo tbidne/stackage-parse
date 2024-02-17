@@ -1,0 +1,922 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides CLI args.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage.Args</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Args.html#getArgs"><span class="hs-identifier">getArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier">Args</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#PkgListFormat"><span class="hs-identifier">PkgListFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Stackage.Args.html#Comma"><span class="hs-identifier">Comma</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Applicative</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">A</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">L</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#CommandFields"><span class="hs-identifier">CommandFields</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#InfoMod"><span class="hs-identifier">InfoMod</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#Mod"><span class="hs-identifier">Mod</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#OptionFields"><span class="hs-identifier">OptionFields</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier">ParserInfo</span></a></span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier">ParserInfo</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFailureCode"><span class="hs-identifier">infoFailureCode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFooter"><span class="hs-identifier">infoFooter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFullDesc"><span class="hs-identifier">infoFullDesc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoHeader"><span class="hs-identifier">infoHeader</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoParser"><span class="hs-identifier">infoParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoPolicy"><span class="hs-identifier">infoPolicy</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>        </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoProgDesc"><span class="hs-identifier">infoProgDesc</span></a></span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="hs-operator">(&lt;**&gt;)</span></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html"><span class="hs-identifier">Options.Applicative.Help.Chunk</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier">Chunk</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier">Chunk</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html"><span class="hs-identifier">Options.Applicative.Help.Chunk</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Chunk</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Pretty.html"><span class="hs-identifier">Options.Applicative.Help.Pretty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Pretty</span></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html"><span class="hs-identifier">Options.Applicative.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#ArgPolicy"><span class="hs-identifier">ArgPolicy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Intersperse"><span class="hs-identifier">Intersperse</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Stackage.Data.Request.html"><span class="hs-identifier">Stackage.Data.Request</span></a></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier">mkSnapshotReqLatestLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier">mkSnapshotReqLatestNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier">mkSnapshotReqLts</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier">mkSnapshotReqNightly</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- | Retrieves CLI 'Args'.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-52"></span><span class="annot"><a href="Stackage.Args.html#getArgs"><span class="hs-identifier hs-type">getArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span>
+</span><span id="line-53"></span><span id="getArgs"><span class="annot"><span class="annottext">getArgs :: IO Args
+</span><a href="Stackage.Args.html#getArgs"><span class="hs-identifier hs-var hs-var">getArgs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParserInfo Args -&gt; IO Args
+forall a. ParserInfo a -&gt; IO a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Extra.html#execParser"><span class="hs-identifier hs-var">OA.execParser</span></a></span><span> </span><span class="annot"><span class="annottext">ParserInfo Args
+</span><a href="Stackage.Args.html#parserInfoArgs"><span class="hs-identifier hs-var">parserInfoArgs</span></a></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- | 'ParserInfo' type for parsing 'Args'.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Stackage.Args.html#parserInfoArgs"><span class="hs-identifier hs-type">parserInfoArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier hs-type">ParserInfo</span></a></span><span> </span><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span>
+</span><span id="line-59"></span><span id="parserInfoArgs"><span class="annot"><span class="annottext">parserInfoArgs :: ParserInfo Args
+</span><a href="Stackage.Args.html#parserInfoArgs"><span class="hs-identifier hs-var hs-var">parserInfoArgs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-60"></span><span>  </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier hs-type">ParserInfo</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">infoParser :: Parser Args
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoParser"><span class="hs-identifier hs-var">infoParser</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser Args
+</span><a href="Stackage.Args.html#argsParser"><span class="hs-identifier hs-var">argsParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><span class="annottext">infoFullDesc :: Bool
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFullDesc"><span class="hs-identifier hs-var">infoFullDesc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>      </span><span class="annot"><span class="annottext">infoProgDesc :: Chunk Doc
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoProgDesc"><span class="hs-identifier hs-var">infoProgDesc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Chunk Doc
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Doc
+forall {a}. Maybe a
+</span><a href="#local-6989586621679089033"><span class="hs-identifier hs-var">desc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>      </span><span class="annot"><span class="annottext">infoHeader :: Chunk Doc
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoHeader"><span class="hs-identifier hs-var">infoHeader</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Chunk Doc
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Doc
+</span><a href="#local-6989586621679089034"><span class="hs-identifier hs-var">headerTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><span class="annottext">infoFooter :: Chunk Doc
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFooter"><span class="hs-identifier hs-var">infoFooter</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Chunk Doc
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Doc
+</span><a href="#local-6989586621679089035"><span class="hs-identifier hs-var">footerTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>      </span><span class="annot"><span class="annottext">infoFailureCode :: Int
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoFailureCode"><span class="hs-identifier hs-var">infoFailureCode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><span class="annottext">infoPolicy :: ArgPolicy
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#infoPolicy"><span class="hs-identifier hs-var">infoPolicy</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ArgPolicy
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Intersperse"><span class="hs-identifier hs-var">Intersperse</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-70"></span><span>    </span><span id="local-6989586621679089034"><span class="annot"><span class="annottext">headerTxt :: Maybe Doc
+</span><a href="#local-6989586621679089034"><span class="hs-identifier hs-var hs-var">headerTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Doc -&gt; Maybe Doc
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Doc
+</span><span class="hs-string">&quot;stackage-parse: A tool for parsing stackage snapshot data.&quot;</span></span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679089035"><span class="annot"><span class="annottext">footerTxt :: Maybe Doc
+</span><a href="#local-6989586621679089035"><span class="hs-identifier hs-var hs-var">footerTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Doc -&gt; Maybe Doc
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Doc
+forall a. IsString a =&gt; a
+</span><a href="Stackage.Args.html#versNum"><span class="hs-identifier hs-var">versNum</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span id="local-6989586621679089033"><span class="annot"><span class="annottext">desc :: Maybe a
+</span><a href="#local-6989586621679089033"><span class="hs-identifier hs-var hs-var">desc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe a
+forall {a}. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- | CLI args.</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-77"></span><span class="hs-keyword">data</span><span> </span><span id="Args"><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier hs-var">Args</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkArgs"><span class="annot"><a href="Stackage.Args.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span></span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-79"></span><span>    </span><span id="%24sel%3AltsSnapshot%3AMkArgs"><span class="annot"><span class="annottext">Args -&gt; Maybe SnapshotReq
+</span><a href="Stackage.Args.html#%24sel%3AltsSnapshot%3AMkArgs"><span class="hs-identifier hs-var hs-var">ltsSnapshot</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-81"></span><span>    </span><span id="%24sel%3AnightlySnapshot%3AMkArgs"><span class="annot"><span class="annottext">Args -&gt; Maybe SnapshotReq
+</span><a href="Stackage.Args.html#%24sel%3AnightlySnapshot%3AMkArgs"><span class="hs-identifier hs-var hs-var">nightlySnapshot</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-83"></span><span>    </span><span id="%24sel%3AexcludeFile%3AMkArgs"><span class="annot"><span class="annottext">Args -&gt; Maybe FilePath
+</span><a href="Stackage.Args.html#%24sel%3AexcludeFile%3AMkArgs"><span class="hs-identifier hs-var hs-var">excludeFile</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-85"></span><span>    </span><span id="%24sel%3AincludeFile%3AMkArgs"><span class="annot"><span class="annottext">Args -&gt; Maybe FilePath
+</span><a href="Stackage.Args.html#%24sel%3AincludeFile%3AMkArgs"><span class="hs-identifier hs-var hs-var">includeFile</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>    </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-87"></span><span>    </span><span id="%24sel%3Acommand%3AMkArgs"><span class="annot"><span class="annottext">Args -&gt; Command
+</span><a href="Stackage.Args.html#%24sel%3Acommand%3AMkArgs"><span class="hs-identifier hs-var hs-var">command</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Stackage.Args.html#Command"><span class="hs-identifier hs-type">Command</span></a></span><span>
+</span><span id="line-88"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-91"></span><span>      </span><span id="local-6989586621679089047"><span id="local-6989586621679089058"><span class="annot"><span class="annottext">Args -&gt; Args -&gt; Bool
+(Args -&gt; Args -&gt; Bool) -&gt; (Args -&gt; Args -&gt; Bool) -&gt; Eq Args
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Args -&gt; Args -&gt; Bool
+== :: Args -&gt; Args -&gt; Bool
+$c/= :: Args -&gt; Args -&gt; Bool
+/= :: Args -&gt; Args -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-92"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-93"></span><span>      </span><span id="local-6989586621679089067"><span id="local-6989586621679089080"><span id="local-6989586621679089084"><span class="annot"><span class="annottext">Int -&gt; Args -&gt; ShowS
+[Args] -&gt; ShowS
+Args -&gt; FilePath
+(Int -&gt; Args -&gt; ShowS)
+-&gt; (Args -&gt; FilePath) -&gt; ([Args] -&gt; ShowS) -&gt; Show Args
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; FilePath) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Args -&gt; ShowS
+showsPrec :: Int -&gt; Args -&gt; ShowS
+$cshow :: Args -&gt; FilePath
+show :: Args -&gt; FilePath
+$cshowList :: [Args] -&gt; ShowS
+showList :: [Args] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- | Format for package list.</span><span>
+</span><span id="line-97"></span><span class="hs-comment">--</span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-99"></span><span class="hs-keyword">data</span><span> </span><span id="PkgListFormat"><span class="annot"><a href="Stackage.Args.html#PkgListFormat"><span class="hs-identifier hs-var">PkgListFormat</span></a></span></span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-101"></span><span>    </span><span id="PkgListShort"><span class="annot"><a href="Stackage.Args.html#PkgListShort"><span class="hs-identifier hs-var">PkgListShort</span></a></span></span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-103"></span><span>    </span><span id="PkgListCabal"><span class="annot"><a href="Stackage.Args.html#PkgListCabal"><span class="hs-identifier hs-var">PkgListCabal</span></a></span></span><span>
+</span><span id="line-104"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-105"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-106"></span><span>      </span><span id="local-6989586621679089094"><span id="local-6989586621679089096"><span class="annot"><span class="annottext">PkgListFormat -&gt; PkgListFormat -&gt; Bool
+(PkgListFormat -&gt; PkgListFormat -&gt; Bool)
+-&gt; (PkgListFormat -&gt; PkgListFormat -&gt; Bool) -&gt; Eq PkgListFormat
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PkgListFormat -&gt; PkgListFormat -&gt; Bool
+== :: PkgListFormat -&gt; PkgListFormat -&gt; Bool
+$c/= :: PkgListFormat -&gt; PkgListFormat -&gt; Bool
+/= :: PkgListFormat -&gt; PkgListFormat -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-107"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-108"></span><span>      </span><span id="local-6989586621679089100"><span id="local-6989586621679089102"><span id="local-6989586621679089106"><span class="annot"><span class="annottext">Int -&gt; PkgListFormat -&gt; ShowS
+[PkgListFormat] -&gt; ShowS
+PkgListFormat -&gt; FilePath
+(Int -&gt; PkgListFormat -&gt; ShowS)
+-&gt; (PkgListFormat -&gt; FilePath)
+-&gt; ([PkgListFormat] -&gt; ShowS)
+-&gt; Show PkgListFormat
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; FilePath) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PkgListFormat -&gt; ShowS
+showsPrec :: Int -&gt; PkgListFormat -&gt; ShowS
+$cshow :: PkgListFormat -&gt; FilePath
+show :: PkgListFormat -&gt; FilePath
+$cshowList :: [PkgListFormat] -&gt; ShowS
+showList :: [PkgListFormat] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-109"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- | Appends/Prepends a comma to the package list.</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-114"></span><span class="hs-keyword">data</span><span> </span><span id="Comma"><span class="annot"><a href="Stackage.Args.html#Comma"><span class="hs-identifier hs-var">Comma</span></a></span></span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-116"></span><span>    </span><span id="CommaAppend"><span class="annot"><a href="Stackage.Args.html#CommaAppend"><span class="hs-identifier hs-var">CommaAppend</span></a></span></span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-118"></span><span>    </span><span id="CommaPrepend"><span class="annot"><a href="Stackage.Args.html#CommaPrepend"><span class="hs-identifier hs-var">CommaPrepend</span></a></span></span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-120"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-121"></span><span>      </span><span id="local-6989586621679089111"><span id="local-6989586621679089113"><span class="annot"><span class="annottext">Comma -&gt; Comma -&gt; Bool
+(Comma -&gt; Comma -&gt; Bool) -&gt; (Comma -&gt; Comma -&gt; Bool) -&gt; Eq Comma
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Comma -&gt; Comma -&gt; Bool
+== :: Comma -&gt; Comma -&gt; Bool
+$c/= :: Comma -&gt; Comma -&gt; Bool
+/= :: Comma -&gt; Comma -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-122"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-123"></span><span>      </span><span id="local-6989586621679089117"><span id="local-6989586621679089119"><span id="local-6989586621679089123"><span class="annot"><span class="annottext">Int -&gt; Comma -&gt; ShowS
+[Comma] -&gt; ShowS
+Comma -&gt; FilePath
+(Int -&gt; Comma -&gt; ShowS)
+-&gt; (Comma -&gt; FilePath) -&gt; ([Comma] -&gt; ShowS) -&gt; Show Comma
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; FilePath) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Comma -&gt; ShowS
+showsPrec :: Int -&gt; Comma -&gt; ShowS
+$cshow :: Comma -&gt; FilePath
+show :: Comma -&gt; FilePath
+$cshowList :: [Comma] -&gt; ShowS
+showList :: [Comma] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- | Command.</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-129"></span><span class="hs-keyword">data</span><span> </span><span id="Command"><span class="annot"><a href="Stackage.Args.html#Command"><span class="hs-identifier hs-var">Command</span></a></span></span><span>
+</span><span id="line-130"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-131"></span><span>    </span><span id="Full"><span class="annot"><a href="Stackage.Args.html#Full"><span class="hs-identifier hs-var">Full</span></a></span></span><span>
+</span><span id="line-132"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-133"></span><span>    </span><span id="ListPackages"><span class="annot"><a href="Stackage.Args.html#ListPackages"><span class="hs-identifier hs-var">ListPackages</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Args.html#PkgListFormat"><span class="hs-identifier hs-type">PkgListFormat</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Args.html#Comma"><span class="hs-identifier hs-type">Comma</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-134"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-135"></span><span>    </span><span id="GetSnapshot"><span class="annot"><a href="Stackage.Args.html#GetSnapshot"><span class="hs-identifier hs-var">GetSnapshot</span></a></span></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-138"></span><span>      </span><span id="local-6989586621679089129"><span id="local-6989586621679089135"><span class="annot"><span class="annottext">Command -&gt; Command -&gt; Bool
+(Command -&gt; Command -&gt; Bool)
+-&gt; (Command -&gt; Command -&gt; Bool) -&gt; Eq Command
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Command -&gt; Command -&gt; Bool
+== :: Command -&gt; Command -&gt; Bool
+$c/= :: Command -&gt; Command -&gt; Bool
+/= :: Command -&gt; Command -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-139"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-140"></span><span>      </span><span id="local-6989586621679089138"><span id="local-6989586621679089145"><span id="local-6989586621679089148"><span class="annot"><span class="annottext">Int -&gt; Command -&gt; ShowS
+[Command] -&gt; ShowS
+Command -&gt; FilePath
+(Int -&gt; Command -&gt; ShowS)
+-&gt; (Command -&gt; FilePath) -&gt; ([Command] -&gt; ShowS) -&gt; Show Command
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; FilePath) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Command -&gt; ShowS
+showsPrec :: Int -&gt; Command -&gt; ShowS
+$cshow :: Command -&gt; FilePath
+show :: Command -&gt; FilePath
+$cshowList :: [Command] -&gt; ShowS
+showList :: [Command] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-141"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span>
+</span><span id="line-143"></span><span class="annot"><a href="Stackage.Args.html#argsParser"><span class="hs-identifier hs-type">argsParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Stackage.Args.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span>
+</span><span id="line-144"></span><span id="argsParser"><span class="annot"><span class="annottext">argsParser :: Parser Args
+</span><a href="Stackage.Args.html#argsParser"><span class="hs-identifier hs-var hs-var">argsParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-145"></span><span>  </span><span class="annot"><span class="annottext">Maybe SnapshotReq
+-&gt; Maybe SnapshotReq
+-&gt; Maybe FilePath
+-&gt; Maybe FilePath
+-&gt; Command
+-&gt; Args
+</span><a href="Stackage.Args.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><span class="annottext">(Maybe SnapshotReq
+ -&gt; Maybe SnapshotReq
+ -&gt; Maybe FilePath
+ -&gt; Maybe FilePath
+ -&gt; Command
+ -&gt; Args)
+-&gt; Parser (Maybe SnapshotReq)
+-&gt; Parser
+     (Maybe SnapshotReq
+      -&gt; Maybe FilePath -&gt; Maybe FilePath -&gt; Command -&gt; Args)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#ltsSnapshotParser"><span class="hs-identifier hs-var">ltsSnapshotParser</span></a></span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Maybe SnapshotReq
+   -&gt; Maybe FilePath -&gt; Maybe FilePath -&gt; Command -&gt; Args)
+-&gt; Parser (Maybe SnapshotReq)
+-&gt; Parser (Maybe FilePath -&gt; Maybe FilePath -&gt; Command -&gt; Args)
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#nightlySnapshotParser"><span class="hs-identifier hs-var">nightlySnapshotParser</span></a></span><span>
+</span><span id="line-148"></span><span>    </span><span class="annot"><span class="annottext">Parser (Maybe FilePath -&gt; Maybe FilePath -&gt; Command -&gt; Args)
+-&gt; Parser (Maybe FilePath)
+-&gt; Parser (Maybe FilePath -&gt; Command -&gt; Args)
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePath)
+</span><a href="Stackage.Args.html#excludeFileParser"><span class="hs-identifier hs-var">excludeFileParser</span></a></span><span>
+</span><span id="line-149"></span><span>    </span><span class="annot"><span class="annottext">Parser (Maybe FilePath -&gt; Command -&gt; Args)
+-&gt; Parser (Maybe FilePath) -&gt; Parser (Command -&gt; Args)
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePath)
+</span><a href="Stackage.Args.html#includeFileParser"><span class="hs-identifier hs-var">includeFileParser</span></a></span><span>
+</span><span id="line-150"></span><span>      </span><span class="annot"><span class="annottext">Parser (Command -&gt; Args)
+-&gt; Parser ((Command -&gt; Args) -&gt; Command -&gt; Args)
+-&gt; Parser (Command -&gt; Args)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;**&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser ((Command -&gt; Args) -&gt; Command -&gt; Args)
+forall a. Parser (a -&gt; a)
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Extra.html#helper"><span class="hs-identifier hs-var">OA.helper</span></a></span><span>
+</span><span id="line-151"></span><span>      </span><span class="annot"><span class="annottext">Parser (Command -&gt; Args)
+-&gt; Parser ((Command -&gt; Args) -&gt; Command -&gt; Args)
+-&gt; Parser (Command -&gt; Args)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;**&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser ((Command -&gt; Args) -&gt; Command -&gt; Args)
+forall a. Parser (a -&gt; a)
+</span><a href="Stackage.Args.html#version"><span class="hs-identifier hs-var">version</span></a></span><span>
+</span><span id="line-152"></span><span>    </span><span class="annot"><span class="annottext">Parser (Command -&gt; Args) -&gt; Parser Command -&gt; Parser Args
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Command
+</span><a href="Stackage.Args.html#commandParser"><span class="hs-identifier hs-var">commandParser</span></a></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span class="annot"><a href="Stackage.Args.html#ltsSnapshotParser"><span class="hs-identifier hs-type">ltsSnapshotParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-155"></span><span id="ltsSnapshotParser"><span class="annot"><span class="annottext">ltsSnapshotParser :: Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#ltsSnapshotParser"><span class="hs-identifier hs-var hs-var">ltsSnapshotParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-156"></span><span>  </span><span class="annot"><span class="annottext">SnapshotReq
+-&gt; (Text -&gt; Either Text SnapshotReq)
+-&gt; Mod OptionFields SnapshotReq
+-&gt; Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#snapshotParser%27"><span class="hs-identifier hs-var">snapshotParser'</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestLts"><span class="hs-identifier hs-var">mkSnapshotReqLatestLts</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLts"><span class="hs-identifier hs-var">mkSnapshotReqLts</span></a></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields SnapshotReq
+forall {a}. Mod OptionFields a
+</span><a href="#local-6989586621679089159"><span class="hs-identifier hs-var">options</span></a></span><span>
+</span><span id="line-157"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-158"></span><span>    </span><span id="local-6989586621679089159"><span class="annot"><span class="annottext">options :: Mod OptionFields a
+</span><a href="#local-6989586621679089159"><span class="hs-identifier hs-var hs-var">options</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-159"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields a] -&gt; Mod OptionFields a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-160"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;lts&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-161"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;(latest|LTS_STR)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-162"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089166"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-163"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-164"></span><span>    </span><span id="local-6989586621679089166"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089166"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-165"></span><span>      </span><span class="annot"><span class="annottext">[FilePath] -&gt; FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-166"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;LTS snapshot e.g. 20.14 or the string 'latest'. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-167"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Overridden by --nightly.&quot;</span></span><span>
+</span><span id="line-168"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-169"></span><span>
+</span><span id="line-170"></span><span class="annot"><a href="Stackage.Args.html#nightlySnapshotParser"><span class="hs-identifier hs-type">nightlySnapshotParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-171"></span><span id="nightlySnapshotParser"><span class="annot"><span class="annottext">nightlySnapshotParser :: Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#nightlySnapshotParser"><span class="hs-identifier hs-var hs-var">nightlySnapshotParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-172"></span><span>  </span><span class="annot"><span class="annottext">SnapshotReq
+-&gt; (Text -&gt; Either Text SnapshotReq)
+-&gt; Mod OptionFields SnapshotReq
+-&gt; Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#snapshotParser%27"><span class="hs-identifier hs-var">snapshotParser'</span></a></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqLatestNightly"><span class="hs-identifier hs-var">mkSnapshotReqLatestNightly</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text SnapshotReq
+</span><a href="Stackage.Data.Request.html#mkSnapshotReqNightly"><span class="hs-identifier hs-var">mkSnapshotReqNightly</span></a></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields SnapshotReq
+forall {a}. Mod OptionFields a
+</span><a href="#local-6989586621679089173"><span class="hs-identifier hs-var">options</span></a></span><span>
+</span><span id="line-173"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-174"></span><span>    </span><span id="local-6989586621679089173"><span class="annot"><span class="annottext">options :: Mod OptionFields a
+</span><a href="#local-6989586621679089173"><span class="hs-identifier hs-var hs-var">options</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-175"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields a] -&gt; Mod OptionFields a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-176"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;nightly&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-177"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;(latest|DATE_STR)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-178"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields a
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089177"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-179"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-180"></span><span>    </span><span id="local-6989586621679089177"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089177"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-181"></span><span>      </span><span class="annot"><span class="annottext">[FilePath] -&gt; FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Nightly snapshot e.g. 2023-03-14 or the string 'latest'. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-183"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Overrides --lts.&quot;</span></span><span>
+</span><span id="line-184"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-185"></span><span>
+</span><span id="line-186"></span><span class="annot"><a href="Stackage.Args.html#excludeFileParser"><span class="hs-identifier hs-type">excludeFileParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-187"></span><span id="excludeFileParser"><span class="annot"><span class="annottext">excludeFileParser :: Parser (Maybe FilePath)
+</span><a href="Stackage.Args.html#excludeFileParser"><span class="hs-identifier hs-var hs-var">excludeFileParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-188"></span><span>  </span><span class="annot"><span class="annottext">Parser FilePath -&gt; Parser (Maybe FilePath)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">A.optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser FilePath -&gt; Parser (Maybe FilePath))
+-&gt; Parser FilePath -&gt; Parser (Maybe FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-189"></span><span>    </span><span class="annot"><span class="annottext">ReadM FilePath -&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM FilePath
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields FilePath -&gt; Parser FilePath)
+-&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-190"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields FilePath] -&gt; Mod OptionFields FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-191"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;exclude&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-192"></span><span>          </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'e'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-193"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;PATH&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-194"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089186"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-195"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-196"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-197"></span><span>    </span><span id="local-6989586621679089186"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089186"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-198"></span><span>      </span><span class="annot"><span class="annottext">[FilePath] -&gt; FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-199"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Path to file with a list of packages to exclude from the package &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-200"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;list. Each package should be listed on a separate line, without &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-201"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;version numbers e.g. text.&quot;</span></span><span>
+</span><span id="line-202"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-203"></span><span>
+</span><span id="line-204"></span><span class="annot"><a href="Stackage.Args.html#includeFileParser"><span class="hs-identifier hs-type">includeFileParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-205"></span><span id="includeFileParser"><span class="annot"><span class="annottext">includeFileParser :: Parser (Maybe FilePath)
+</span><a href="Stackage.Args.html#includeFileParser"><span class="hs-identifier hs-var hs-var">includeFileParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-206"></span><span>  </span><span class="annot"><span class="annottext">Parser FilePath -&gt; Parser (Maybe FilePath)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">A.optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser FilePath -&gt; Parser (Maybe FilePath))
+-&gt; Parser FilePath -&gt; Parser (Maybe FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-207"></span><span>    </span><span class="annot"><span class="annottext">ReadM FilePath -&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM FilePath
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields FilePath -&gt; Parser FilePath)
+-&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-208"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields FilePath] -&gt; Mod OptionFields FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-209"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;include&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-210"></span><span>          </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'i'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-211"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;PATH&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-212"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089192"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-213"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-214"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-215"></span><span>    </span><span id="local-6989586621679089192"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089192"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-216"></span><span>      </span><span class="annot"><span class="annottext">[FilePath] -&gt; FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-217"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Path to file with a list of packages to include from the package &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-218"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;list. Each package should be listed on a separate line, without &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-219"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;version numbers e.g. text.&quot;</span></span><span>
+</span><span id="line-220"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span><span class="annot"><a href="Stackage.Args.html#snapshotParser%27"><span class="hs-identifier hs-type">snapshotParser'</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-223"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Constructor for latest snapshot.</span></span><span>
+</span><span id="line-224"></span><span>  </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-225"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Constructor for specific snapshot. Can fail.</span></span><span>
+</span><span id="line-226"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-227"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Options.</span></span><span>
+</span><span id="line-228"></span><span>  </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#Mod"><span class="hs-identifier hs-type">Mod</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#OptionFields"><span class="hs-identifier hs-type">OptionFields</span></a></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-229"></span><span>  </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-type">SnapshotReq</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-230"></span><span id="snapshotParser%27"><span class="annot"><span class="annottext">snapshotParser' :: SnapshotReq
+-&gt; (Text -&gt; Either Text SnapshotReq)
+-&gt; Mod OptionFields SnapshotReq
+-&gt; Parser (Maybe SnapshotReq)
+</span><a href="Stackage.Args.html#snapshotParser%27"><span class="hs-identifier hs-var hs-var">snapshotParser'</span></a></span></span><span> </span><span id="local-6989586621679089198"><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089198"><span class="hs-identifier hs-var">mkLatest</span></a></span></span><span> </span><span id="local-6989586621679089199"><span class="annot"><span class="annottext">Text -&gt; Either Text SnapshotReq
+</span><a href="#local-6989586621679089199"><span class="hs-identifier hs-var">mk</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser SnapshotReq -&gt; Parser (Maybe SnapshotReq)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">A.optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser SnapshotReq -&gt; Parser (Maybe SnapshotReq))
+-&gt; (Mod OptionFields SnapshotReq -&gt; Parser SnapshotReq)
+-&gt; Mod OptionFields SnapshotReq
+-&gt; Parser (Maybe SnapshotReq)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ReadM SnapshotReq
+-&gt; Mod OptionFields SnapshotReq -&gt; Parser SnapshotReq
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM SnapshotReq
+</span><a href="#local-6989586621679089201"><span class="hs-identifier hs-var">readSnapshot</span></a></span><span>
+</span><span id="line-231"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-232"></span><span>    </span><span id="local-6989586621679089201"><span class="annot"><span class="annottext">readSnapshot :: ReadM SnapshotReq
+</span><a href="#local-6989586621679089201"><span class="hs-identifier hs-var hs-var">readSnapshot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-233"></span><span>      </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text -&gt; (Text -&gt; ReadM SnapshotReq) -&gt; ReadM SnapshotReq
+forall a b. ReadM a -&gt; (a -&gt; ReadM b) -&gt; ReadM b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-234"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;latest&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; ReadM SnapshotReq
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089198"><span class="hs-identifier hs-var">mkLatest</span></a></span><span>
+</span><span id="line-235"></span><span>        </span><span id="local-6989586621679089214"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089214"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text SnapshotReq
+</span><a href="#local-6989586621679089199"><span class="hs-identifier hs-var">mk</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089214"><span class="hs-identifier hs-var">other</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-236"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679089215"><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089215"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">SnapshotReq -&gt; ReadM SnapshotReq
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">SnapshotReq
+</span><a href="#local-6989586621679089215"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-237"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679089216"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089216"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ReadM SnapshotReq
+forall a. FilePath -&gt; ReadM a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; FilePath -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(FilePath -&gt; ReadM SnapshotReq) -&gt; FilePath -&gt; ReadM SnapshotReq
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; FilePath
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679089216"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-238"></span><span>
+</span><span id="line-239"></span><span class="annot"><a href="Stackage.Args.html#commandParser"><span class="hs-identifier hs-type">commandParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Stackage.Args.html#Command"><span class="hs-identifier hs-type">Command</span></a></span><span>
+</span><span id="line-240"></span><span id="commandParser"><span class="annot"><span class="annottext">commandParser :: Parser Command
+</span><a href="Stackage.Args.html#commandParser"><span class="hs-identifier hs-var hs-var">commandParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-241"></span><span>  </span><span class="annot"><span class="annottext">Mod CommandFields Command -&gt; Parser Command
+forall a. Mod CommandFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Extra.html#hsubparser"><span class="hs-identifier hs-var">OA.hsubparser</span></a></span><span> </span><span class="annot"><span class="annottext">(Mod CommandFields Command -&gt; Parser Command)
+-&gt; Mod CommandFields Command -&gt; Parser Command
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-242"></span><span>    </span><span class="annot"><span class="annottext">[Mod CommandFields Command] -&gt; Mod CommandFields Command
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-243"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+-&gt; Parser Command -&gt; InfoMod Command -&gt; Mod CommandFields Command
+forall a. FilePath -&gt; Parser a -&gt; InfoMod a -&gt; Mod CommandFields a
+</span><a href="Stackage.Args.html#mkCommand"><span class="hs-identifier hs-var">mkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;full&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser Command
+</span><a href="#local-6989586621679089220"><span class="hs-identifier hs-var">fullParser</span></a></span><span> </span><span class="annot"><span class="annottext">InfoMod Command
+forall {a}. InfoMod a
+</span><a href="#local-6989586621679089221"><span class="hs-identifier hs-var">fullHelp</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-244"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+-&gt; Parser Command -&gt; InfoMod Command -&gt; Mod CommandFields Command
+forall a. FilePath -&gt; Parser a -&gt; InfoMod a -&gt; Mod CommandFields a
+</span><a href="Stackage.Args.html#mkCommand"><span class="hs-identifier hs-var">mkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;pkgs&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser Command
+</span><a href="#local-6989586621679089222"><span class="hs-identifier hs-var">listPackagesParser</span></a></span><span> </span><span class="annot"><span class="annottext">InfoMod Command
+forall {a}. InfoMod a
+</span><a href="#local-6989586621679089223"><span class="hs-identifier hs-var">listPackagesHelp</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-245"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+-&gt; Parser Command -&gt; InfoMod Command -&gt; Mod CommandFields Command
+forall a. FilePath -&gt; Parser a -&gt; InfoMod a -&gt; Mod CommandFields a
+</span><a href="Stackage.Args.html#mkCommand"><span class="hs-identifier hs-var">mkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;snapshot&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser Command
+</span><a href="#local-6989586621679089224"><span class="hs-identifier hs-var">getSnapshotParser</span></a></span><span> </span><span class="annot"><span class="annottext">InfoMod Command
+forall {a}. InfoMod a
+</span><a href="#local-6989586621679089225"><span class="hs-identifier hs-var">getSnapshotHelp</span></a></span><span>
+</span><span id="line-246"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-247"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-248"></span><span>    </span><span id="local-6989586621679089220"><span class="annot"><span class="annottext">fullParser :: Parser Command
+</span><a href="#local-6989586621679089220"><span class="hs-identifier hs-var hs-var">fullParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Command -&gt; Parser Command
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Command
+</span><a href="Stackage.Args.html#Full"><span class="hs-identifier hs-var">Full</span></a></span><span>
+</span><span id="line-249"></span><span>    </span><span id="local-6989586621679089221"><span class="annot"><span class="annottext">fullHelp :: InfoMod a
+</span><a href="#local-6989586621679089221"><span class="hs-identifier hs-var hs-var">fullHelp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-250"></span><span>      </span><span class="annot"><span class="annottext">FilePath -&gt; InfoMod a
+forall a. FilePath -&gt; InfoMod a
+</span><a href="Stackage.Args.html#mkCmdDesc"><span class="hs-identifier hs-var">mkCmdDesc</span></a></span><span>
+</span><span id="line-251"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Prints full package list and snapshot metadata formatted as json.&quot;</span></span><span>
+</span><span id="line-252"></span><span>
+</span><span id="line-253"></span><span>    </span><span id="local-6989586621679089222"><span class="annot"><span class="annottext">listPackagesParser :: Parser Command
+</span><a href="#local-6989586621679089222"><span class="hs-identifier hs-var hs-var">listPackagesParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe PkgListFormat -&gt; Maybe Comma -&gt; Command
+</span><a href="Stackage.Args.html#ListPackages"><span class="hs-identifier hs-var">ListPackages</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe PkgListFormat -&gt; Maybe Comma -&gt; Command)
+-&gt; Parser (Maybe PkgListFormat) -&gt; Parser (Maybe Comma -&gt; Command)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe PkgListFormat)
+</span><a href="Stackage.Args.html#pkgListFormatParser"><span class="hs-identifier hs-var">pkgListFormatParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe Comma -&gt; Command)
+-&gt; Parser (Maybe Comma) -&gt; Parser Command
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe Comma)
+</span><a href="Stackage.Args.html#commaParser"><span class="hs-identifier hs-var">commaParser</span></a></span><span>
+</span><span id="line-254"></span><span>    </span><span id="local-6989586621679089223"><span class="annot"><span class="annottext">listPackagesHelp :: InfoMod a
+</span><a href="#local-6989586621679089223"><span class="hs-identifier hs-var hs-var">listPackagesHelp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; InfoMod a
+forall a. FilePath -&gt; InfoMod a
+</span><a href="Stackage.Args.html#mkCmdDesc"><span class="hs-identifier hs-var">mkCmdDesc</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Lists all packages in a given snapshot.&quot;</span></span><span>
+</span><span id="line-255"></span><span>
+</span><span id="line-256"></span><span>    </span><span id="local-6989586621679089224"><span class="annot"><span class="annottext">getSnapshotParser :: Parser Command
+</span><a href="#local-6989586621679089224"><span class="hs-identifier hs-var hs-var">getSnapshotParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Command -&gt; Parser Command
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Command
+</span><a href="Stackage.Args.html#GetSnapshot"><span class="hs-identifier hs-var">GetSnapshot</span></a></span><span>
+</span><span id="line-257"></span><span>    </span><span id="local-6989586621679089225"><span class="annot"><span class="annottext">getSnapshotHelp :: InfoMod a
+</span><a href="#local-6989586621679089225"><span class="hs-identifier hs-var hs-var">getSnapshotHelp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; InfoMod a
+forall a. FilePath -&gt; InfoMod a
+</span><a href="Stackage.Args.html#mkCmdDesc"><span class="hs-identifier hs-var">mkCmdDesc</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Prints snapshot metadata formatted as json.&quot;</span></span><span>
+</span><span id="line-258"></span><span>
+</span><span id="line-259"></span><span class="annot"><a href="Stackage.Args.html#pkgListFormatParser"><span class="hs-identifier hs-type">pkgListFormatParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Args.html#PkgListFormat"><span class="hs-identifier hs-type">PkgListFormat</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-260"></span><span id="pkgListFormatParser"><span class="annot"><span class="annottext">pkgListFormatParser :: Parser (Maybe PkgListFormat)
+</span><a href="Stackage.Args.html#pkgListFormatParser"><span class="hs-identifier hs-var hs-var">pkgListFormatParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-261"></span><span>  </span><span class="annot"><span class="annottext">Parser PkgListFormat -&gt; Parser (Maybe PkgListFormat)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">A.optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser PkgListFormat -&gt; Parser (Maybe PkgListFormat))
+-&gt; Parser PkgListFormat -&gt; Parser (Maybe PkgListFormat)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-262"></span><span>    </span><span class="annot"><span class="annottext">ReadM PkgListFormat
+-&gt; Mod OptionFields PkgListFormat -&gt; Parser PkgListFormat
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM PkgListFormat
+</span><a href="#local-6989586621679089235"><span class="hs-identifier hs-var">readListFormat</span></a></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields PkgListFormat -&gt; Parser PkgListFormat)
+-&gt; Mod OptionFields PkgListFormat -&gt; Parser PkgListFormat
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-263"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields PkgListFormat] -&gt; Mod OptionFields PkgListFormat
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-264"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields PkgListFormat
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;format&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-265"></span><span>          </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields PkgListFormat
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'f'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-266"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields PkgListFormat
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;(short|cabal)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-267"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields PkgListFormat
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089236"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-268"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-269"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-270"></span><span>    </span><span id="local-6989586621679089235"><span class="annot"><span class="annottext">readListFormat :: ReadM PkgListFormat
+</span><a href="#local-6989586621679089235"><span class="hs-identifier hs-var hs-var">readListFormat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-271"></span><span>      </span><span class="annot"><span class="annottext">forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><span class="annottext">ReadM FilePath
+-&gt; (FilePath -&gt; ReadM PkgListFormat) -&gt; ReadM PkgListFormat
+forall a b. ReadM a -&gt; (a -&gt; ReadM b) -&gt; ReadM b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-272"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;short&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PkgListFormat -&gt; ReadM PkgListFormat
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">PkgListFormat
+</span><a href="Stackage.Args.html#PkgListShort"><span class="hs-identifier hs-var">PkgListShort</span></a></span><span>
+</span><span id="line-273"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;cabal&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PkgListFormat -&gt; ReadM PkgListFormat
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">PkgListFormat
+</span><a href="Stackage.Args.html#PkgListCabal"><span class="hs-identifier hs-var">PkgListCabal</span></a></span><span>
+</span><span id="line-274"></span><span>        </span><span id="local-6989586621679089249"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089249"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ReadM PkgListFormat
+forall a. FilePath -&gt; ReadM a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; FilePath -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(FilePath -&gt; ReadM PkgListFormat)
+-&gt; FilePath -&gt; ReadM PkgListFormat
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Unknown format: &quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089249"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-275"></span><span>    </span><span id="local-6989586621679089236"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089236"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-276"></span><span>      </span><span class="annot"><span class="annottext">[FilePath] -&gt; FilePath
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-277"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Short corresponds to &lt;pkg-name&gt;-&lt;vers&gt; e.g. 'text-2.0.1'.&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-278"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Cabal corresponds to format suitable to be pasted into a cabal &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-279"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;file's 'build-depends' e.g. 'text ==2.0.1'. Defaults to short.&quot;</span></span><span>
+</span><span id="line-280"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-281"></span><span>
+</span><span id="line-282"></span><span class="annot"><a href="Stackage.Args.html#commaParser"><span class="hs-identifier hs-type">commaParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Stackage.Args.html#Comma"><span class="hs-identifier hs-type">Comma</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-283"></span><span id="commaParser"><span class="annot"><span class="annottext">commaParser :: Parser (Maybe Comma)
+</span><a href="Stackage.Args.html#commaParser"><span class="hs-identifier hs-var hs-var">commaParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-284"></span><span>  </span><span class="annot"><span class="annottext">Parser Comma -&gt; Parser (Maybe Comma)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">A.optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser Comma -&gt; Parser (Maybe Comma))
+-&gt; Parser Comma -&gt; Parser (Maybe Comma)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-285"></span><span>    </span><span class="annot"><span class="annottext">ReadM Comma -&gt; Mod OptionFields Comma -&gt; Parser Comma
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Comma
+</span><a href="#local-6989586621679089255"><span class="hs-identifier hs-var">readComma</span></a></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields Comma -&gt; Parser Comma)
+-&gt; Mod OptionFields Comma -&gt; Parser Comma
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-286"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields Comma] -&gt; Mod OptionFields Comma
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-287"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields Comma
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;comma&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-288"></span><span>          </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields Comma
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'c'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-289"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields Comma
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;(append|prepend)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-290"></span><span>          </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields Comma
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var">mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089256"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-291"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-292"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-293"></span><span>    </span><span id="local-6989586621679089255"><span class="annot"><span class="annottext">readComma :: ReadM Comma
+</span><a href="#local-6989586621679089255"><span class="hs-identifier hs-var hs-var">readComma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-294"></span><span>      </span><span class="annot"><span class="annottext">forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><span class="annottext">ReadM FilePath -&gt; (FilePath -&gt; ReadM Comma) -&gt; ReadM Comma
+forall a b. ReadM a -&gt; (a -&gt; ReadM b) -&gt; ReadM b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-295"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;append&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Comma -&gt; ReadM Comma
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Comma
+</span><a href="Stackage.Args.html#CommaAppend"><span class="hs-identifier hs-var">CommaAppend</span></a></span><span>
+</span><span id="line-296"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;prepend&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Comma -&gt; ReadM Comma
+forall a. a -&gt; ReadM a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Comma
+</span><a href="Stackage.Args.html#CommaPrepend"><span class="hs-identifier hs-var">CommaPrepend</span></a></span><span>
+</span><span id="line-297"></span><span>        </span><span id="local-6989586621679089269"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089269"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ReadM Comma
+forall a. FilePath -&gt; ReadM a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; FilePath -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(FilePath -&gt; ReadM Comma) -&gt; FilePath -&gt; ReadM Comma
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Unknown comma: &quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089269"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-298"></span><span>    </span><span id="local-6989586621679089256"><span class="annot"><span class="annottext">helpTxt :: FilePath
+</span><a href="#local-6989586621679089256"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;If given, prepends/appends a comma before/after each entry.&quot;</span></span><span>
+</span><span id="line-299"></span><span>
+</span><span id="line-300"></span><span id="local-6989586621679088949"><span class="annot"><a href="Stackage.Args.html#mkCommand"><span class="hs-identifier hs-type">mkCommand</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088949"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#InfoMod"><span class="hs-identifier hs-type">InfoMod</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088949"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#Mod"><span class="hs-identifier hs-type">Mod</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#CommandFields"><span class="hs-identifier hs-type">CommandFields</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088949"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-301"></span><span id="mkCommand"><span class="annot"><span class="annottext">mkCommand :: forall a. FilePath -&gt; Parser a -&gt; InfoMod a -&gt; Mod CommandFields a
+</span><a href="Stackage.Args.html#mkCommand"><span class="hs-identifier hs-var hs-var">mkCommand</span></a></span></span><span> </span><span id="local-6989586621679089271"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089271"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span id="local-6989586621679089272"><span class="annot"><span class="annottext">Parser a
+</span><a href="#local-6989586621679089272"><span class="hs-identifier hs-var">parser</span></a></span></span><span> </span><span id="local-6989586621679089273"><span class="annot"><span class="annottext">InfoMod a
+</span><a href="#local-6989586621679089273"><span class="hs-identifier hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ParserInfo a -&gt; Mod CommandFields a
+forall a. FilePath -&gt; ParserInfo a -&gt; Mod CommandFields a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#command"><span class="hs-identifier hs-var">OA.command</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089271"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Parser a -&gt; InfoMod a -&gt; ParserInfo a
+forall a. Parser a -&gt; InfoMod a -&gt; ParserInfo a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#info"><span class="hs-identifier hs-var">OA.info</span></a></span><span> </span><span class="annot"><span class="annottext">Parser a
+</span><a href="#local-6989586621679089272"><span class="hs-identifier hs-var">parser</span></a></span><span> </span><span class="annot"><span class="annottext">InfoMod a
+</span><a href="#local-6989586621679089273"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-302"></span><span>
+</span><span id="line-303"></span><span id="local-6989586621679089276"><span class="annot"><a href="Stackage.Args.html#version"><span class="hs-identifier hs-type">version</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679089276"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679089276"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-304"></span><span id="version"><span class="annot"><span class="annottext">version :: forall a. Parser (a -&gt; a)
+</span><a href="Stackage.Args.html#version"><span class="hs-identifier hs-var hs-var">version</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+forall a. FilePath -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#infoOption"><span class="hs-identifier hs-var">OA.infoOption</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679089282"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;version&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields (a -&gt; a)
+-&gt; Mod OptionFields (a -&gt; a) -&gt; Mod OptionFields (a -&gt; a)
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'v'</span></span><span class="hs-special">)</span><span>
+</span><span id="line-305"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-306"></span><span>    </span><span id="local-6989586621679089282"><span class="annot"><span class="annottext">txt :: FilePath
+</span><a href="#local-6989586621679089282"><span class="hs-identifier hs-var hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-307"></span><span>      </span><span class="annot"><span class="annottext">FilePath -&gt; [FilePath] -&gt; FilePath
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">L.intercalate</span></span><span>
+</span><span id="line-308"></span><span>        </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-309"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;stackage-parse&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-310"></span><span>          </span><span class="annot"><span class="annottext">FilePath
+forall a. IsString a =&gt; a
+</span><a href="Stackage.Args.html#versNum"><span class="hs-identifier hs-var">versNum</span></a></span><span>
+</span><span id="line-311"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-312"></span><span>
+</span><span id="line-313"></span><span id="local-6989586621679088897"><span class="annot"><a href="Stackage.Args.html#versNum"><span class="hs-identifier hs-type">versNum</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679088897"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679088897"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-314"></span><span id="versNum"><span class="annot"><span class="annottext">versNum :: forall a. IsString a =&gt; a
+</span><a href="Stackage.Args.html#versNum"><span class="hs-identifier hs-var hs-var">versNum</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Version: 0.1&quot;</span></span><span>
+</span><span id="line-315"></span><span>
+</span><span id="line-316"></span><span id="local-6989586621679088923"><span id="local-6989586621679088924"><span class="annot"><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-type">mkHelp</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.Internal.html#Mod"><span class="hs-identifier hs-type">OA.Mod</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088923"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088924"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-317"></span><span id="mkHelp"><span class="annot"><span class="annottext">mkHelp :: forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><a href="Stackage.Args.html#mkHelp"><span class="hs-identifier hs-var hs-var">mkHelp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-318"></span><span>  </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Mod f a
+forall (f :: * -&gt; *) a. Maybe Doc -&gt; Mod f a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#helpDoc"><span class="hs-identifier hs-var">OA.helpDoc</span></a></span><span>
+</span><span id="line-319"></span><span>    </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; Mod f a)
+-&gt; (FilePath -&gt; Maybe Doc) -&gt; FilePath -&gt; Mod f a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Doc -&gt; Doc) -&gt; Maybe Doc -&gt; Maybe Doc
+forall a b. (a -&gt; b) -&gt; Maybe a -&gt; Maybe b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Doc -&gt; Doc -&gt; Doc
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Doc
+</span><a href="file:///nix/store/5jwnyrnq9g7lg4y23ich5gva8m48w3cf-ansi-wl-pprint-0.6.9-doc/share/doc/ansi-wl-pprint-0.6.9/html/src/Text.PrettyPrint.ANSI.Leijen.Internal.html#hardline"><span class="hs-identifier hs-var">Pretty.hardline</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-320"></span><span>    </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; Maybe Doc)
+-&gt; (FilePath -&gt; Maybe Doc) -&gt; FilePath -&gt; Maybe Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Chunk Doc -&gt; Maybe Doc
+forall a. Chunk a -&gt; Maybe a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#unChunk"><span class="hs-identifier hs-var">Chunk.unChunk</span></a></span><span>
+</span><span id="line-321"></span><span>    </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Maybe Doc)
+-&gt; (FilePath -&gt; Chunk Doc) -&gt; FilePath -&gt; Maybe Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Chunk Doc
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-322"></span><span>
+</span><span id="line-323"></span><span id="local-6989586621679088951"><span class="annot"><a href="Stackage.Args.html#mkCmdDesc"><span class="hs-identifier hs-type">mkCmdDesc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#InfoMod"><span class="hs-identifier hs-type">InfoMod</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679088951"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-324"></span><span id="mkCmdDesc"><span class="annot"><span class="annottext">mkCmdDesc :: forall a. FilePath -&gt; InfoMod a
+</span><a href="Stackage.Args.html#mkCmdDesc"><span class="hs-identifier hs-var hs-var">mkCmdDesc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-325"></span><span>  </span><span class="annot"><span class="annottext">Maybe Doc -&gt; InfoMod a
+forall a. Maybe Doc -&gt; InfoMod a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Builder.html#progDescDoc"><span class="hs-identifier hs-var">OA.progDescDoc</span></a></span><span>
+</span><span id="line-326"></span><span>    </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; InfoMod a)
+-&gt; (FilePath -&gt; Maybe Doc) -&gt; FilePath -&gt; InfoMod a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Doc -&gt; Doc) -&gt; Maybe Doc -&gt; Maybe Doc
+forall a b. (a -&gt; b) -&gt; Maybe a -&gt; Maybe b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Doc -&gt; Doc -&gt; Doc
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Doc
+</span><a href="file:///nix/store/5jwnyrnq9g7lg4y23ich5gva8m48w3cf-ansi-wl-pprint-0.6.9-doc/share/doc/ansi-wl-pprint-0.6.9/html/src/Text.PrettyPrint.ANSI.Leijen.Internal.html#hardline"><span class="hs-identifier hs-var">Pretty.hardline</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-327"></span><span>    </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; Maybe Doc)
+-&gt; (FilePath -&gt; Maybe Doc) -&gt; FilePath -&gt; Maybe Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Chunk Doc -&gt; Maybe Doc
+forall a. Chunk a -&gt; Maybe a
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#unChunk"><span class="hs-identifier hs-var">Chunk.unChunk</span></a></span><span>
+</span><span id="line-328"></span><span>    </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Maybe Doc)
+-&gt; (FilePath -&gt; Chunk Doc) -&gt; FilePath -&gt; Maybe Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Chunk Doc
+</span><a href="file:///nix/store/p95sh6gkqwx60502ywdqkrvpwcmvswh7-optparse-applicative-0.17.1.0-doc/share/doc/optparse-applicative-0.17.1.0/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-329"></span></pre></body></html>

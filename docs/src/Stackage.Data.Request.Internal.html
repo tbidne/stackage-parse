@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Types for stackage REST requests.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Stackage.Data.Request.Internal</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier">SnapshotReq</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier">SnapshotIdReq</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#MkSnapshotIdReq"><span class="hs-identifier">MkSnapshotIdReq</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- | Stackage snapshots.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">data</span><span> </span><span id="SnapshotReq"><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotReq"><span class="hs-identifier hs-var">SnapshotReq</span></a></span></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | LTS snapshots e.g. @SnapshotReqLts (Just &quot;20.14&quot;)@. 'Nothing'</span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-comment">-- corresponds to the latest LTS.</span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-20"></span><span>    </span><span id="UnsafeSnapshotReqLts"><span class="annot"><a href="Stackage.Data.Request.Internal.html#UnsafeSnapshotReqLts"><span class="hs-identifier hs-var">UnsafeSnapshotReqLts</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Nightly snapshots e.g. @SnapshotReqNightly (Just &quot;2023-03-14&quot;)@.</span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-comment">-- 'Nothing' corresponds to the latest nightly.</span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-25"></span><span>    </span><span id="UnsafeSnapshotReqNightly"><span class="annot"><a href="Stackage.Data.Request.Internal.html#UnsafeSnapshotReqNightly"><span class="hs-identifier hs-var">UnsafeSnapshotReqNightly</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-28"></span><span>      </span><span id="local-6989586621679088696"><span id="local-6989586621679088702"><span class="annot"><span class="annottext">SnapshotReq -&gt; SnapshotReq -&gt; Bool
+(SnapshotReq -&gt; SnapshotReq -&gt; Bool)
+-&gt; (SnapshotReq -&gt; SnapshotReq -&gt; Bool) -&gt; Eq SnapshotReq
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: SnapshotReq -&gt; SnapshotReq -&gt; Bool
+== :: SnapshotReq -&gt; SnapshotReq -&gt; Bool
+$c/= :: SnapshotReq -&gt; SnapshotReq -&gt; Bool
+/= :: SnapshotReq -&gt; SnapshotReq -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-30"></span><span>      </span><span id="local-6989586621679088708"><span id="local-6989586621679088717"><span id="local-6989586621679088721"><span class="annot"><span class="annottext">Int -&gt; SnapshotReq -&gt; ShowS
+[SnapshotReq] -&gt; ShowS
+SnapshotReq -&gt; String
+(Int -&gt; SnapshotReq -&gt; ShowS)
+-&gt; (SnapshotReq -&gt; String)
+-&gt; ([SnapshotReq] -&gt; ShowS)
+-&gt; Show SnapshotReq
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; SnapshotReq -&gt; ShowS
+showsPrec :: Int -&gt; SnapshotReq -&gt; ShowS
+$cshow :: SnapshotReq -&gt; String
+show :: SnapshotReq -&gt; String
+$cshowList :: [SnapshotReq] -&gt; ShowS
+showList :: [SnapshotReq] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">newtype</span><span> </span><span id="SnapshotIdReq"><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier hs-var">SnapshotIdReq</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnsafeSnapshotIdReq"><span class="annot"><a href="Stackage.Data.Request.Internal.html#UnsafeSnapshotIdReq"><span class="hs-identifier hs-var">UnsafeSnapshotIdReq</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679088727"><span id="local-6989586621679088730"><span class="annot"><span class="annottext">SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool
+(SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool)
+-&gt; (SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool) -&gt; Eq SnapshotIdReq
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool
+== :: SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool
+$c/= :: SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool
+/= :: SnapshotIdReq -&gt; SnapshotIdReq -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">deriving</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-41"></span><span>      </span><span id="local-6989586621679088734"><span id="local-6989586621679088738"><span id="local-6989586621679088742"><span class="annot"><span class="annottext">Int -&gt; SnapshotIdReq -&gt; ShowS
+[SnapshotIdReq] -&gt; ShowS
+SnapshotIdReq -&gt; String
+(Int -&gt; SnapshotIdReq -&gt; ShowS)
+-&gt; (SnapshotIdReq -&gt; String)
+-&gt; ([SnapshotIdReq] -&gt; ShowS)
+-&gt; Show SnapshotIdReq
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; SnapshotIdReq -&gt; ShowS
+showsPrec :: Int -&gt; SnapshotIdReq -&gt; ShowS
+$cshow :: SnapshotIdReq -&gt; String
+show :: SnapshotIdReq -&gt; String
+$cshowList :: [SnapshotIdReq] -&gt; ShowS
+showList :: [SnapshotIdReq] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">pattern</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#MkSnapshotIdReq"><span class="hs-identifier hs-type">MkSnapshotIdReq</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#SnapshotIdReq"><span class="hs-identifier hs-type">SnapshotIdReq</span></a></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">pattern</span><span> </span><span id="MkSnapshotIdReq"><span id="%24mMkSnapshotIdReq"><span class="annot"><span class="annottext">$mMkSnapshotIdReq :: forall {r}. SnapshotIdReq -&gt; (Text -&gt; r) -&gt; ((# #) -&gt; r) -&gt; r
+</span><a href="Stackage.Data.Request.Internal.html#MkSnapshotIdReq"><span class="hs-identifier hs-var hs-var">MkSnapshotIdReq</span></a></span></span></span><span> </span><span class="annot"><a href="#local-6989586621679088747"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#UnsafeSnapshotIdReq"><span class="hs-identifier hs-type">UnsafeSnapshotIdReq</span></a></span><span> </span><span id="local-6989586621679088747"><span class="annot"><a href="#local-6989586621679088747"><span class="hs-identifier hs-var">t</span></a></span></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-pragma">{-# COMPLETE</span><span> </span><span class="annot"><a href="Stackage.Data.Request.Internal.html#MkSnapshotIdReq"><span class="hs-pragma hs-type">MkSnapshotIdReq</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-50"></span></pre></body></html>
