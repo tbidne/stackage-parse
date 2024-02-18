@@ -116,11 +116,27 @@ getStackage snapshot = withResponse snapshotId $ \res -> do
 getStatusCode :: Response body -> Int
 getStatusCode = Status.statusCode . HttpClient.responseStatus
 
+-- | Exception reason.
+--
+-- @since 0.1
 data ExceptionReason
-  = ReasonStatus Status
-  | ReasonReadBody SomeException
-  | ReasonDecodeUtf8 UnicodeException
-  | ReasonDecodeJson String String
+  = -- | Received non-200.
+    --
+    -- @since 0.1
+    ReasonStatus Status
+  | -- | Exception when reading the body.
+    --
+    -- @since 0.1
+    ReasonReadBody SomeException
+  | -- | Exception decoding body to UTF-8.
+    --
+    -- @since 0.1
+    ReasonDecodeUtf8 UnicodeException
+  | -- | Exception decoding JSON. The first string is the json we attempted
+    -- to decode. The second is the error message.
+    --
+    -- @since 0.1
+    ReasonDecodeJson String String
   deriving stock
     ( -- | @since 0.1
       Show
@@ -138,6 +154,7 @@ data StackageException = MkStackageException
       Show
     )
 
+-- | @since 0.1
 instance Exception StackageException where
   displayException ex =
     case ex.reason of
@@ -156,7 +173,7 @@ instance Exception StackageException where
               ]
       ReasonReadBody readBodyEx ->
         mconcat
-          [ "Exception when trying to read body for snapshot '",
+          [ "Exception reading body for snapshot '",
             snapshotIdTxt,
             "':\n\n",
             displayException readBodyEx
