@@ -253,7 +253,7 @@ test404 = testCase "Throws 404" $ do
         Just _ -> pure ()
     Right _ -> assertFailure "Expected 404 exception, received none."
   where
-    prefix = "Received 404 for snapshot: lts-00.99. Is the snapshot correct?"
+    prefix = "Received 404 for snapshot 'lts-00.99'. Is the snapshot correct? Status message: \"Not Found\""
     badRun = withArgs args $ withStackageParser (const (pure ()))
     args = ["--lts", "00.99", "pkgs"]
 

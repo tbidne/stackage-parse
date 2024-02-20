@@ -113,9 +113,6 @@ getStackage snapshot = withResponse snapshotId $ \res -> do
   where
     snapshotId = mkSnapshotIdReq snapshot
 
-getStatusCode :: Response body -> Int
-getStatusCode = Status.statusCode . HttpClient.responseStatus
-
 -- | Exception reason.
 --
 -- @since 0.1
@@ -162,14 +159,19 @@ instance Exception StackageException where
         if is404 status
           then
             mconcat
-              [ "Received 404 for snapshot: ",
+              [ "Received 404 for snapshot '",
                 snapshotIdTxt,
-                ". Is the snapshot correct?"
+                "'. Is the snapshot correct? ",
+                statusMessage status
               ]
           else
             mconcat
-              [ "Received exception for snapshot: ",
-                snapshotIdTxt
+              [ "Received ",
+                show $ Status.statusCode status,
+                " for snapshot '",
+                snapshotIdTxt,
+                "'. ",
+                statusMessage status
               ]
       ReasonReadBody readBodyEx ->
         mconcat
@@ -195,3 +197,12 @@ instance Exception StackageException where
     where
       snapshotIdTxt = T.unpack (unSnapshotIdReq ex.snapshotIdReq)
       is404 x = Status.statusCode x == 404
+
+      statusMessage s =
+        mconcat
+          [ "Status message: ",
+            show $ Status.statusMessage s
+          ]
+
+getStatusCode :: Response body -> Int
+getStatusCode = Status.statusCode . HttpClient.responseStatus
