@@ -15,14 +15,7 @@
         let
           hlib = pkgs.haskell.lib;
           ghc-version = "ghc963";
-          compiler = pkgs.haskell.packages."${ghc-version}".override {
-            overrides = final: prev: {
-              hlint = prev.hlint_3_6_1;
-              ormolu = prev.ormolu_0_7_2_0;
-              package-version =
-                hlib.dontCheck (final.callHackage "package-version" "0.3" { });
-            };
-          };
+          compiler = pkgs.haskell.packages."${ghc-version}";
           mkPkg = returnShellEnv:
             nix-hs-utils.mkHaskellPkg {
               inherit compiler pkgs returnShellEnv;
