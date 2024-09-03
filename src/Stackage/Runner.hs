@@ -10,7 +10,6 @@ where
 import Control.Applicative ((<|>))
 import Control.Exception (throwIO)
 import Control.Monad (when)
-import Data.ByteString qualified as BS
 import Data.Foldable (for_)
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
@@ -31,6 +30,8 @@ import Stackage.Args
     PkgListFormat (PkgListCabal, PkgListShort),
     getArgs,
   )
+import System.File.OsPath qualified as FileIO
+import System.OsPath (OsPath)
 import Text.JSON (JSON)
 import Text.JSON qualified as JSON
 
@@ -88,15 +89,15 @@ withStackageParser onStr = do
     commaAppend p = p <> ","
     commaPrepend p = ", " <> p
 
-getExcludeFn :: FilePath -> IO (Text -> Bool)
+getExcludeFn :: OsPath -> IO (Text -> Bool)
 getExcludeFn path = (\s -> not . (`Set.member` s)) <$> parsePackageFileList path
 
-getIncludeFn :: FilePath -> IO (Text -> Bool)
+getIncludeFn :: OsPath -> IO (Text -> Bool)
 getIncludeFn path = flip Set.member <$> parsePackageFileList path
 
-parsePackageFileList :: FilePath -> IO (HashSet Text)
+parsePackageFileList :: OsPath -> IO (HashSet Text)
 parsePackageFileList path = do
-  contents <- either throwIO pure . TEnc.decodeUtf8' =<< BS.readFile path
+  contents <- either throwIO pure . TEnc.decodeUtf8' =<< FileIO.readFile' path
 
   pure
     $ Set.fromList

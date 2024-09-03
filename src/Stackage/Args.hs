@@ -31,6 +31,7 @@ import Options.Applicative
         infoPolicy,
         infoProgDesc
       ),
+    ReadM,
     (<**>),
   )
 import Options.Applicative qualified as OA
@@ -45,6 +46,8 @@ import Stackage.Data.Request
     mkSnapshotReqLts,
     mkSnapshotReqNightly,
   )
+import System.OsPath (OsPath)
+import System.OsPath qualified as OsPath
 
 -- | Retrieves CLI 'Args'.
 --
@@ -80,9 +83,9 @@ data Args = MkArgs
     -- | @since 0.1
     nightlySnapshot :: Maybe SnapshotReq,
     -- | @since 0.1
-    excludeFile :: Maybe FilePath,
+    excludeFile :: Maybe OsPath,
     -- | @since 0.1
-    includeFile :: Maybe FilePath,
+    includeFile :: Maybe OsPath,
     -- | @since 0.1
     command :: Command
   }
@@ -183,10 +186,10 @@ nightlySnapshotParser =
           "Overrides --lts."
         ]
 
-excludeFileParser :: Parser (Maybe FilePath)
+excludeFileParser :: Parser (Maybe OsPath)
 excludeFileParser =
   A.optional $
-    OA.option OA.str $
+    OA.option validOsPath $
       mconcat
         [ OA.long "exclude",
           OA.short 'e',
@@ -201,10 +204,10 @@ excludeFileParser =
           "version numbers e.g. text."
         ]
 
-includeFileParser :: Parser (Maybe FilePath)
+includeFileParser :: Parser (Maybe OsPath)
 includeFileParser =
   A.optional $
-    OA.option OA.str $
+    OA.option validOsPath $
       mconcat
         [ OA.long "include",
           OA.short 'i',
@@ -326,3 +329,21 @@ mkCmdDesc =
     . fmap (<> Pretty.hardline)
     . Chunk.unChunk
     . Chunk.paragraph
+
+validOsPath :: ReadM OsPath
+validOsPath = do
+  s <- OA.str
+  case OsPath.encodeUtf s of
+    Nothing -> fail $ "Could not encode to OsPath: " ++ s
+    Just osPath ->
+      if OsPath.isValid osPath
+        then pure osPath
+        else
+          fail $
+            mconcat
+              [ "Encoded FilePath '",
+                s,
+                "' to invalid OsPath '",
+                show osPath,
+                "'"
+              ]

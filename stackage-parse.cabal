@@ -60,7 +60,8 @@ library
 
   build-depends:
     , base                  >=4.16.0.0 && <4.21
-    , bytestring            >=0.11.1.0 && <13
+    , file-io               ^>=0.1.0.0
+    , filepath              >=1.4.2.1  && <1.6
     , http-client           >=0.5.9    && <0.8
     , http-client-tls       ^>=0.3
     , http-types            ^>=0.12.3
