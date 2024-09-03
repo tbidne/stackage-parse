@@ -3,7 +3,9 @@ name:               stackage-parse
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.2.8 || ==9.4.8 || ==9.6.6 || ==9.8.2 || ==9.10.1
+tested-with:
+  GHC ==9.2.8 || ==9.4.8 || ==9.6.6 || ==9.8.2 || ==9.10.1
+
 copyright:          2023-2024 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -101,7 +103,7 @@ test-suite functional
     , base
     , env-guard             ^>=0.2
     , json
-    , package-version       ^>=0.3
+    , package-version       >=0.3  && <0.5
     , stackage-parse
     , tasty
     , tasty-hunit
