@@ -13,7 +13,7 @@ module Stackage.Data.Request
   )
 where
 
-import Control.Monad ((>=>))
+import Control.Monad (guard)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16, Word8)
@@ -76,13 +76,14 @@ mkSnapshotReqNightly txt = case T.split (== '-') txt of
     readDay = readDecimal @Word8 2 1 31
 
     readDecimal :: (Ord a, Read a) => Int -> a -> a -> Text -> Maybe a
-    readDecimal len l u =
-      (\t -> if T.length t == len then Just t else Nothing)
-        >=> TR.readMaybe . T.unpack
-        >=> \n ->
-          if n >= l && n <= u
-            then Just n
-            else Nothing
+    readDecimal len l u t = do
+      guard (T.length t == len)
+
+      x <- TR.readMaybe . T.unpack $ t
+
+      if x >= l && x <= u
+        then Just x
+        else Nothing
 
 nonEmpty :: Text -> Bool
 nonEmpty = not . T.null . T.strip
