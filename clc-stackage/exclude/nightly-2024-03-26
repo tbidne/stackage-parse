@@ -7,6 +7,23 @@
 #
 # stackage-parse --nightly 2024-03-26 -e clc-stackage/exclude/nightly-2024-03-26 pkgs -f cabal -c append
 
+# NEWER
+#
+# These added later, after the fact, but before we upgraded to a new snapshot.
+alsa-pcm
+alsa-seq
+btrfs
+fft
+glpk-headers
+HsOpenSSL
+jack
+magic
+pcre-light
+primecount
+rdtsc
+regex-pcre
+text-icu
+
 # NEW
 boomwhacker
 cabal-sort
