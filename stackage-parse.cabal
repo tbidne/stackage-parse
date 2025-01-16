@@ -17,9 +17,8 @@ description:
   package list.
 
 category:           Stackage, CLI
-extra-source-files:
-  CHANGELOG.md
-  README.md
+extra-source-files: README.md
+extra-doc-files:    CHANGELOG.md
 
 source-repository head
   type:     git
