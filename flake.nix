@@ -16,7 +16,7 @@
         { pkgs, ... }:
         let
           hlib = pkgs.haskell.lib;
-          ghc-version = "ghc982";
+          ghc-version = "ghc9101";
           compiler = pkgs.haskell.packages."${ghc-version}";
           mkPkg =
             returnShellEnv:
@@ -24,6 +24,12 @@
               inherit compiler pkgs returnShellEnv;
               name = "stackage-parse";
               root = ./.;
+
+              devTools = [
+                (hlib.dontCheck compiler.cabal-fmt)
+                (hlib.dontCheck compiler.haskell-language-server)
+                pkgs.nixfmt-rfc-style
+              ];
             };
           compilerPkgs = {
             inherit compiler pkgs;
@@ -35,8 +41,8 @@
 
           apps = {
             format = nix-hs-utils.format compilerPkgs;
-            lint = nix-hs-utils.lint compilerPkgs;
-            lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
+            #lint = nix-hs-utils.lint compilerPkgs;
+            #lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
           };
         };
       systems = [
